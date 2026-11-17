@@ -1,1 +1,12 @@
-PROSCHE BUILD
+17/11/2026- Starting
+
+
+						====================================================PROSCHE BUILD IDEA & BLUEPRINT======================================================
+
+  1. Main Objective:
+     
+     > Dedicated Web site for PORSCHE
+     > Building a new, inovative, mordern, responsive, smooth, dynamic UI/UX from scratch 
+     > Featuring the one and only PORSCHE 911 GT3 RS
+     > Something nobody seen before!!!!
+     > Amaze Everybody
