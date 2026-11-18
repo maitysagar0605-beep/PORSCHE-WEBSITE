@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" style="--accent-color: #39FF14; --accent-glow: rgba(57, 255, 20, 0.35);">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PORSCHE 911 GT3 RS | Driven by Dreams</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Background Layers -->
+  <div class="bg-layer bg-effect" style="background-image: url('assests/images/BG_EFFECT.jfif');"></div>
+  <div class="bg-layer bg-grid"></div>
+
+  <!-- Minimal 4-Link Floating Glassmorphism Navbar -->
+  <header class="glass-nav">
+    <a href="#hero" class="brand-cluster">
+      <div class="logo-badge">
+        <img src="assests/images/LOGO2_IMG.png" alt="Porsche Crest" class="porsche-crest" />
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">PORSCHE</span>
+        <span class="brand-tagline">Driven by Dreams</span>
+      </div>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary Navigation">
+      <a href="#hero" class="nav-link active">911 GT3 RS</a>
+      <a href="#studio" class="nav-link">Aero &amp; Studio</a>
+      <a href="#heritage" class="nav-link">Heritage &amp; Team</a>
+      <a href="#specs" class="nav-link">Specs &amp; Reviews</a>
+    </nav>
+
+    <div class="audio-controls">
+      <button id="themeAudioBtn" class="audio-pill" aria-pressed="false" title="Toggle Ambient Synth Theme">
+        <span class="pulse-dot"></span>
+        <span id="themeAudioLabel">THEME: OFF</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION -->
+    <section id="hero" class="hero-section">
+      <div class="hero-container">
+        <div class="hero-copy reveal-up">
+          <div class="eyebrow-tag">TYPE 992 • NATURALLY ASPIRATED TRACK WEAPON</div>
+          <h1 class="hero-title">911 GT3 <span class="accent-text">RS</span></h1>
+          <p class="hero-philosophy">
+            Born in the Weissach wind tunnel. Every louver, swan-neck pylon, and active DRS flap exists for a single obsession: translating 525 PS of 9,000-RPM flat-six fury into 860 kg of relentless downforce.
+          </p>
+
+          <div class="hero-quick-metrics">
+            <div class="metric-chip">
+              <span class="metric-val">525 PS</span>
+              <span class="metric-lbl">4.0L FLAT-6</span>
+            </div>
+            <div class="metric-chip">
+              <span class="metric-val">3.2 s</span>
+              <span class="metric-lbl">0–100 KM/H</span>
+            </div>
+            <div class="metric-chip">
+              <span class="metric-val">860 KG</span>
+              <span class="metric-lbl">DOWNFORCE @ 285 KM/H</span>
+            </div>
+          </div>
+
+          <div class="hero-cta-row">
+            <button id="open360Btn" class="btn-primary">
+              <span>LAUNCH 360° 3D VIEW</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+              </svg>
+            </button>
+
+            <button id="heroRevBtn" class="btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              <span>REV 9,000 RPM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D Tilt Car Display Card -->
+        <div class="hero-stage-wrapper reveal-up">
+          <div id="heroTiltCard" class="hero-car-card">
+            <div class="card-telemetry-bar">
+              <span class="mono-tag">CHASSIS: WPZ-992-GT3RS</span>
+              <span id="activePaintBadge" class="mono-tag accent-badge">ACID GREEN</span>
+            </div>
+
+            <div class="car-viewport">
+              <img
+                id="heroCarImg"
+                src="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
+                alt="Porsche 911 GT3 RS"
+                class="hero-car-img"
+              />
+              <div class="car-reflection-sheen"></div>
+            </div>
+
+            <div class="card-footer-controls">
+              <div class="visualizer-box">
+                <canvas id="exhaustCanvas" width="220" height="36" aria-label="Exhaust audio waveform"></canvas>
+                <span class="mono-hint">FLAT-6 TITANIUM EXHAUST TELEMETRY</span>
+              </div>
+              <button id="card360Trigger" class="mini-3d-btn">3D INSPECT ↻</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STICKY STUDIO: CONFIGURATOR + INTERACTIVE SVG AERO HOTSPOTS -->
+    <section id="studio" class="studio-section">
+      <div class="section-header reveal-up">
+        <span class="section-kicker">01 // WIND TUNNEL &amp; BESPOKE STUDIO</span>
+        <h2>AERODYNAMIC SCULPTING &amp; LIVERY</h2>
+      </div>
+
+      <div class="studio-split-layout">
+        <!-- Left Sticky Showcase (Never Lose Sight of the Car) -->
+        <div class="sticky-showcase-col">
+          <div class="sticky-car-frame">
+            <div class="frame-top-hud">
+              <span id="studioColorName" class="hud-title">ACID GREEN // WEISSACH SPEC</span>
+              <span id="studioWheelName" class="hud-sub">20"/21" SATIN BLACK FORGED MAGNESIUM</span>
+            </div>
+
+            <div class="sticky-image-stage">
+              <img
+                id="studioCarImg"
+                src="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
+                alt="Configured Porsche 911 GT3 RS"
+                class="studio-car-photo"
+              />
+
+              <!-- Interactive SVG Airflow & Hotspot Overlay -->
+              <svg id="aeroSvgOverlay" class="aero-svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <linearGradient id="airflowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="var(--accent-color)" stop-opacity="0" />
+                    <stop offset="50%" stop-color="var(--accent-color)" stop-opacity="0.85" />
+                    <stop offset="100%" stop-color="var(--accent-color)" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Animated Airflow Streamlines -->
+                <g id="airflowLines" class="airflow-group">
+                  <path class="streamline s1" d="M 40,240 Q 210,180 390,115 T 570,95" />
+                  <path class="streamline s2" d="M 30,295 Q 220,255 385,205 T 575,185" />
+                  <path class="streamline s3" d="M 60,350 Q 260,335 430,305 T 580,290" />
+                </g>
+
+                <!-- Hotspot Pin 1: Swan-Neck Rear Wing & DRS -->
+                <g class="aero-pin active" data-aero="wing" transform="translate(415, 118)">
+                  <circle class="pin-pulse" r="18" />
+                  <circle class="pin-core" r="7" />
+                  <text x="14" y="4" class="pin-label">01 DRS WING</text>
+                </g>
+
+                <!-- Hotspot Pin 2: Central Radiator & S-Duct -->
+                <g class="aero-pin" data-aero="sduct" transform="translate(215, 232)">
+                  <circle class="pin-pulse" r="18" />
+                  <circle class="pin-core" r="7" />
+                  <text x="14" y="4" class="pin-label">02 S-DUCT</text>
+                </g>
+
+                <!-- Hotspot Pin 3: Front Fender Louvers & Diffuser -->
+                <g class="aero-pin" data-aero="louvers" transform="translate(345, 265)">
+                  <circle class="pin-pulse" r="18" />
+                  <circle class="pin-core" r="7" />
+                  <text x="14" y="4" class="pin-label">03 LOUVERS</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="frame-bottom-hud">
+              <button id="toggleAirflowBtn" class="hud-toggle-btn active">AIRFLOW VECTORS: ON</button>
+              <button id="studioRevBtn" class="hud-toggle-btn">EXHAUST NOTE 🔊</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Scrolling Controls & Aero Breakdowns -->
+        <div class="scrolling-controls-col">
+          <!-- Persistent Paint & Wheel Configurator -->
+          <div class="glass-panel reveal-up">
+            <div class="panel-header">
+              <h3>EXTERIOR LIVERY &amp; CHASSIS</h3>
+              <span class="saved-indicator" id="saveStatus">SYNCED TO LOCALSTORAGE</span>
+            </div>
+            <p class="panel-desc">Select factory paintwork and forged wheel finish. Selections persist automatically across sessions.</p>
+
+            <div class="control-group">
+              <label class="control-label">PAINT TO SAMPLE / SPECIAL COLOURS</label>
+              <div class="swatch-grid" id="paintSwatches">
+                <button
+                  class="swatch-btn active"
+                  data-color="Acid Green"
+                  data-hex="#39FF14"
+                  data-glow="rgba(57, 255, 20, 0.35)"
+                  data-img="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
+                >
+                  <span class="swatch-dot" style="background:#39FF14;"></span>
+                  <span>Acid Green</span>
+                </button>
+
+                <button
+                  class="swatch-btn"
+                  data-color="Shark Blue"
+                  data-hex="#00B4FF"
+                  data-glow="rgba(0, 180, 255, 0.35)"
+                  data-img="assests/images/CAR_IMG_BLUE.jfif"
+                >
+                  <span class="swatch-dot" style="background:#00B4FF;"></span>
+                  <span>Shark Blue</span>
+                </button>
+
+                <button
+                  class="swatch-btn"
+                  data-color="Lava Orange"
+                  data-hex="#FF5500"
+                  data-glow="rgba(255, 85, 0, 0.35)"
+                  data-img="assests/images/CAR_IMG_ORANGE.jfif"
+                >
+                  <span class="swatch-dot" style="background:#FF5500;"></span>
+                  <span>Lava Orange</span>
+                </button>
+
+                <button
+                  class="swatch-btn"
+                  data-color="Racing Yellow"
+                  data-hex="#FFD000"
+                  data-glow="rgba(255, 208, 0, 0.35)"
+                  data-img="assests/images/CAR_IMG_YELLOW.jfif"
+                >
+                  <span class="swatch-dot" style="background:#FFD000;"></span>
+                  <span>Racing Yellow</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">FORGED MAGNESIUM WHEEL PACKAGE</label>
+              <div class="wheel-grid" id="wheelOptions">
+                <button class="wheel-btn active" data-wheel='20"/21" SATIN BLACK FORGED MAGNESIUM'>
+                  Satin Black Magnesium
+                </button>
+                <button class="wheel-btn" data-wheel='20"/21" PYRO RED WEISSACH FORGED'>
+                  Pyro Red Weissach
+                </button>
+                <button class="wheel-btn" data-wheel='20"/21" SATIN NEODYME RACE SPEC'>
+                  Satin Neodyme
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Aero Telemetry Readout Card -->
+          <div class="glass-panel aero-readout-panel reveal-up">
+            <div class="panel-header">
+              <h3 id="aeroTitle">SWAN-NECK REAR WING &amp; ACTIVE DRS</h3>
+              <span id="aeroCode" class="mono-tag accent-badge">HOTSPOT 01</span>
+            </div>
+            <p id="aeroDescription" class="panel-desc">
+              Top-mounted swan-neck pylons leave the sensitive underside of the main wing undisturbed. At the press of the steering-wheel DRS button, the hydraulically actuated upper element flattens to slash drag on long straights—and snaps vertical under hard braking as an airbrake.
+            </p>
+            <div class="aero-stats-row">
+              <div class="aero-stat">
+                <span class="stat-num" id="aeroDownforceVal">409 kg</span>
+                <span class="stat-lbl">FRONT / REAR LOAD @ 200 KM/H</span>
+              </div>
+              <div class="aero-stat">
+                <span class="stat-num" id="aeroTotalVal">860 kg</span>
+                <span class="stat-lbl">PEAK TOTAL DOWNFORCE @ 285 KM/H</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY & ENGINEERING MASTERS SECTION -->
+    <section id="heritage" class="heritage-section" style="background-image: linear-gradient(to bottom, #0B0D0E, rgba(11,13,14,0.82), #0B0D0E), url('assests/images/BG_IMG2.jfif');">
+      <div class="section-header reveal-up">
+        <span class="section-kicker">02 // STUTTGART LEGACY &amp; ENGINEERING MINDS</span>
+        <h2>FROM HEAVY ARMOR TO TRACK PERFECTION</h2>
+      </div>
+
+      <!-- Porsche Origins & Wartime Engineering Timeline -->
+      <div class="timeline-grid">
+        <article class="timeline-card reveal-up">
+          <span class="year-badge">1931 • STUTTGART</span>
+          <h3>Dr. Ing. h.c. F. Porsche GmbH</h3>
+          <p>
+            Founded by Ferdinand Porsche as an independent motor vehicle development and consulting bureau, pioneering torsion-bar suspension, aerodynamic streamliners, and high-efficiency engineering principles that still define every 911.
+          </p>
+        </article>
+
+        <article class="timeline-card reveal-up">
+          <span class="year-badge">1939–1945 • HEAVY ARMOR ERA</span>
+          <h3>Wartime Tank &amp; Hybrid Drive Engineering</h3>
+          <p>
+            During WWII, Porsche's engineering bureau designed heavy armored vehicles—including the Tiger (P) prototype, the Ferdinand/Elefant tank destroyer, and the super-heavy Panzer VIII Maus—pioneering petrol-electric hybrid drive systems before returning exclusively to lightweight sports cars in 1948.
+          </p>
+        </article>
+
+        <article class="timeline-card reveal-up">
+          <span class="year-badge">1948–1963 • THE 356 &amp; 911</span>
+          <h3>Birth of an Unmistakable Silhouette</h3>
+          <p>
+            Ferry Porsche realized his dream with the 1948 Porsche 356 "No. 1" Roadster, culminating in the 1963 debut of the air-cooled 911—establishing the rear-engine motorsport DNA carried forward to the 992 GT3 RS.
+          </p>
+        </article>
+      </div>
+
+      <!-- Notable Porsche Icons Gallery -->
+      <div class="models-showcase reveal-up">
+        <h3 class="sub-heading">NOTABLE PORSCHE MILESTONES</h3>
+        <div class="models-grid">
+          <div class="model-card">
+            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_YELLOW.jfif');">
+              <span class="model-era">1973 • CARRERA RS 2.7</span>
+            </div>
+            <div class="model-info">
+              <h4>911 Carrera RS 2.7</h4>
+              <p>The original "Rennsport" homologation icon featuring the legendary ducktail spoiler and 210 PS flat-six.</p>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_BLUE.jfif');">
+              <span class="model-era">1986 • GROUP B PIONEER</span>
+            </div>
+            <div class="model-info">
+              <h4>Porsche 959</h4>
+              <p>Twin-turbocharged all-wheel-drive technological tour de force that redefined supercar aerodynamics and telemetry.</p>
+            </div>
+          </div>
+
+          <div class="model-card">
+            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_ORANGE.jfif');">
+              <span class="model-era">2013 • HYBRID HYPERCAR</span>
+            </div>
+            <div class="model-info">
+              <h4>Porsche 918 Spyder</h4>
+              <p>887 PS V8 plug-in hybrid hypercar that shattered the Nürburgring 7-minute barrier with Weissach aero.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architects & Engineers Behind the 911 GT3 RS -->
+      <div class="team-section reveal-up">
+        <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 992 GT3 RS</h3>
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="role-tag">DIRECTOR, GT MODEL LINE</div>
+            <h4>Andreas Preuninger</h4>
+            <p>
+              Known as "Mr. GT," Preuninger led the Weissach GT division to abandon front luggage space in favor of a single, massive central angled radiator—unlocking active front-wing aerodynamics never before seen on a road-legal 911.
+            </p>
+          </div>
+
+          <div class="team-card">
+            <div class="role-tag">VP STYLE PORSCHE</div>
+            <h4>Michael Mauer</h4>
+            <p>
+              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 992 widebody silhouette.
+            </p>
+          </div>
+
+          <div class="team-card">
+            <div class="role-tag">BRAND AMBASSADOR &amp; TEST DRIVER</div>
+            <h4>Jörg Bergmeister</h4>
+            <p>
+              Piloted the 992 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPECIFICATIONS SECTION (3 INTERACTIVE TABS + SCROLL COUNTERS) -->
+    <section id="specs" class="specs-section" style="background-image: linear-gradient(to bottom, #0B0D0E, rgba(11,13,14,0.88), #0B0D0E), url('assests/images/BG_IMG3.jfif');">
+      <div class="section-header reveal-up">
+        <span class="section-kicker">03 // TECHNICAL DATA &amp; TELEMETRY</span>
+        <h2>ENGINEERED WITHOUT COMPROMISE</h2>
+      </div>
+
+      <!-- Animated Scroll Counter Strip -->
+      <div class="counters-banner reveal-up" id="countersBanner">
+        <div class="counter-box">
+          <div class="counter-number"><span class="count-up" data-target="296">0</span> <small>km/h</small></div>
+          <div class="counter-label">TOP TRACK SPEED</div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-number"><span class="count-up" data-target="3.2" data-decimals="1">0.0</span> <small>s</small></div>
+          <div class="counter-label">0–100 KM/H SPRINT</div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-number"><span class="count-up" data-target="10.6" data-decimals="1">0.0</span> <small>s</small></div>
+          <div class="counter-label">0–200 KM/H ACCELERATION</div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-number"><span class="count-up" data-target="1450">0</span> <small>kg</small></div>
+          <div class="counter-label">DIN KERB WEIGHT</div>
+        </div>
+      </div>
+
+      <!-- 3 Interactive Tabs: Engine / Aero / Chassis & Interior -->
+      <div class="specs-tabs-wrapper reveal-up">
+        <div class="tab-bar" role="tablist">
+          <button class="spec-tab active" role="tab" aria-selected="true" data-tab="engine">
+            ENGINE: 4.0L FLAT-6 / 525 PS
+          </button>
+          <button class="spec-tab" role="tab" aria-selected="false" data-tab="aero">
+            AERO: 860 KG DOWNFORCE / DRS
+          </button>
+          <button class="spec-tab" role="tab" aria-selected="false" data-tab="chassis">
+            CHASSIS &amp; COCKPIT: 9,000 RPM / PDK
+          </button>
+        </div>
+
+        <!-- Tab 1: Engine & Performance -->
+        <div class="tab-panel active" id="tab-engine">
+          <div class="spec-cards-grid">
+            <div class="spec-card">
+              <span class="spec-kicker">POWERPLANT</span>
+              <h4>4.0-Litre Naturally Aspirated Boxer-6</h4>
+              <p>386 kW (525 PS) at 8,500 rpm with 465 Nm torque at 6,300 rpm. Equipped with motorsport-derived camshafts, individual throttle bodies, and rigid valve train.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">ACCELERATION &amp; BRAKING</span>
+              <h4>0–100 km/h in 3.2 s • Top Speed 296 km/h</h4>
+              <p>0–160 km/h in 6.9 s; 0–200 km/h in 10.6 s. Massive 408 mm front composite/steel rotors (optional 410 mm PCCB) deliver sub-30-meter 100–0 km/h stopping power.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">TRANSMISSION</span>
+              <h4>7-Speed Short-Ratio PDK</h4>
+              <p>Shorter overall gear ratios than the standard 911 GT3 for explosive corner-exit punch, paired with a lightweight stainless-steel twin-tailpipe sports exhaust.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Aerodynamics -->
+        <div class="tab-panel" id="tab-aero">
+          <div class="spec-cards-grid">
+            <div class="spec-card">
+              <span class="spec-kicker">ACTIVE AERODYNAMICS</span>
+              <h4>Formula 1-Inspired DRS System</h4>
+              <p>Continuously adjustable front wing elements and a two-piece swan-neck rear wing generate 409 kg of downforce at 200 km/h and 860 kg at 285 km/h—triple the standard GT3.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">COOLING ARCHITECTURE</span>
+              <h4>Single Central Angled Radiator</h4>
+              <p>Replaces the three-radiator layout and front trunk with a single large radiator borrowed from the Le Mans-winning 911 RSR, freeing space for active front aero flaps.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">VORTEX MANAGEMENT</span>
+              <h4>CFRP Roof Fins &amp; Wheel Arch Louvers</h4>
+              <p>Carbon-fiber roof fins direct warm radiator exhaust air outward so the rear wing ingests pure, cool ambient airflow, while fender louvers relieve wheel-well pressure.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Chassis & Interior -->
+        <div class="tab-panel" id="tab-chassis">
+          <div class="spec-cards-grid">
+            <div class="spec-card">
+              <span class="spec-kicker">SUSPENSION &amp; STEERING</span>
+              <h4>Double-Wishbone Front Axle &amp; PASM</h4>
+              <p>Aerodynamically shaped teardrop wishbone links add 40 kg of front downforce at top speed. Drivers can adjust rebound/compression damping and PTV+ differential directly from the steering wheel.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">COCKPIT &amp; INTERIOR</span>
+              <h4>CFRP Full Bucket Seats &amp; Race-Tex</h4>
+              <p>Finished in black leather, microfibre Race-Tex, and satin carbon weave. Features a 360 mm GT3 steering wheel with four rotary mode dials and dedicated DRS button.</p>
+            </div>
+            <div class="spec-card">
+              <span class="spec-kicker">LIGHTWEIGHT CONSTRUCTION</span>
+              <h4>Extensive Carbon-Fiber Reinforced Plastic</h4>
+              <p>Doors, front wings, roof, front lid, and bucket seats are crafted from CFRP, keeping kerb weight to 1,450 kg (1,435 kg with Weissach magnesium wheels).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER SECTION: STAR RATING, USER REVIEW BOX & DEVELOPER CREDITS -->
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="review-box-card">
+        <h3>RATE THIS 911 GT3 RS EXPERIENCE</h3>
+        <p class="footer-sub">Leave your rating and feedback on the Weissach interactive showcase.</p>
+
+        <div class="star-rating" id="starRating" role="radiogroup" aria-label="Star Rating">
+          <button type="button" class="star-btn active" data-star="1" aria-label="1 Star">★</button>
+          <button type="button" class="star-btn active" data-star="2" aria-label="2 Stars">★</button>
+          <button type="button" class="star-btn active" data-star="3" aria-label="3 Stars">★</button>
+          <button type="button" class="star-btn active" data-star="4" aria-label="4 Stars">★</button>
+          <button type="button" class="star-btn active" data-star="5" aria-label="5 Stars">★</button>
+          <span id="ratingText" class="rating-label">5 / 5 — Track Perfection</span>
+        </div>
+
+        <form id="reviewForm" class="review-form">
+          <input type="text" id="reviewerName" placeholder="Your Name (e.g., Track Enthusiast)" required />
+          <textarea id="reviewMessage" rows="3" placeholder="Write your review of the Porsche 911 GT3 RS showcase..." required></textarea>
+          <button type="submit" class="btn-primary submit-review-btn">POST REVIEW</button>
+        </form>
+
+        <div id="reviewsFeed" class="reviews-feed" aria-live="polite"></div>
+      </div>
+
+      <div class="developer-info-card">
+        <img src="assests/images/LOGO2_IMG.png" alt="Porsche Emblem" class="footer-crest" />
+        <h4>PORSCHE 911 GT3 RS SHOWCASE</h4>
+        <p class="footer-note">
+          Engineered with pure HTML5, CSS3 3D perspective transforms, and Web Audio API flat-six acoustic synthesis.
+        </p>
+
+        <div class="contact-links">
+          <a href="mailto:maitysagar0605@gmail.com" class="dev-link">
+            <span>✉ Gmail:</span> maitysagar0605@gmail.com
+          </a>
+          <a href="https://github.com/maitysagar0605-beep" target="_blank" rel="noopener noreferrer" class="dev-link">
+            <span>⌘ GitHub:</span> github.com/maitysagar0605-beep
+          </a>
+        </div>
+
+        <div class="copyright-bar">
+          Built by <strong>maitysagar0605-beep®</strong> with <span class="heart">♥</span> • © 2026 All Rights Reserved
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- INTERACTIVE 360° 3D INSPECTION MODAL -->
+  <div id="modal360" class="modal-360" aria-hidden="true">
+    <div class="modal-360-content">
+      <div class="modal-360-header">
+        <div>
+          <span class="mono-tag accent-badge">INTERACTIVE 360° CSS 3D STAGE</span>
+          <h3>PORSCHE 911 GT3 RS — DRAG TO ROTATE</h3>
+        </div>
+        <button id="close360Btn" class="close-modal-btn" aria-label="Close 3D View">✕</button>
+      </div>
+
+      <div id="stage360Viewport" class="stage-360-viewport">
+        <div id="car360Object" class="car-360-object">
+          <img
+            id="modal360Img"
+            src="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
+            alt="360 View Porsche 911 GT3 RS"
+            draggable="false"
+          />
+          <div class="orbit-ring"></div>
+        </div>
+        <div class="angle-hud">YAW ANGLE: <span id="yawReadout">0°</span> • DRAG OR USE SLIDER</div>
+      </div>
+
+      <div class="modal-360-footer">
+        <input type="range" id="angleSlider" min="-180" max="180" value="0" aria-label="Rotate 360 degrees" />
+        <button id="autoSpinBtn" class="btn-secondary">AUTO-ORBIT: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
