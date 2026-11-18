@@ -1,25 +1,25 @@
-------------------------------------------------------------------------------------------------------------------------------------------------------------																								|	                                                                                                                                 |
-    	   FlAWS	        |  					                        SOLUTIONS									                                                                     |
+------------------------------------------------------------------------------------------------------------------------------------------------------------																						    |	                                                                                                                               |
+    	   FlAWS	    |  					                        SOLUTIONS									                                           |
 ------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-  1. Heavy 3D Engines   |  Use CSS 3D transforms (perspective, rotateY), lightweight <video> hero loops with preload="metadata",  			                   |                
-   & Lag                |  and IntersectionObserver to lazy-load high-res gallery assets only when scrolled into view.					                           |
+  1. Heavy 3D Engines   |  Use CSS 3D transforms (perspective, rotateY), lightweight <video> hero loops with preload="metadata",  			               |                
+   & Lag                |  and IntersectionObserver to lazy-load high-res gallery assets only when scrolled into view.					                   |
 -----------------------	| ---------------------------------------------------------------------------------------------------------------------------------|
-  2. Overloaded 	      |  Group specs into 3 interactive tabs (Engine: 4.0L Flat-6 / 525 PS, Aero: 860 kg Downforce / DRS, Chassis: 9,000 RPM / PDK) 	   |
-     Spec Walls         |  with animated JS number counters triggered on scroll. 	       								                                                   |	
+  2. Overloaded 	    |  Group specs into 3 interactive tabs (Engine: 4.0L Flat-6 / 525 PS, Aero: 860 kg Downforce / DRS, Chassis: 9,000 RPM / PDK) 	   |
+     Spec Walls         |  with animated JS number counters triggered on scroll. 	       								                                   |	
 -----------------------	| ---------------------------------------------------------------------------------------------------------------------------------|
-  3. Lossing Sight      |  Lock the car showcase inside a position: sticky container on the left/top while the customization controls 			               |
-     of the car         |  and aero breakdowns scroll smoothly beside it.							 			                                                               |
+  3. Lossing Sight      |  Lock the car showcase inside a position: sticky container on the left/top while the customization controls 			           |
+     of the car         |  and aero breakdowns scroll smoothly beside it.							 			                                           |
 ------------------------|----------------------------------------------------------------------------------------------------------------------------------| 
-  4. Static, Passive    |  Build an interactive SVG/Image Hotspot Overlay where clicking pins on the swan-neck rear wing, S-duct, 			                   |
-     Areo Explanations	|  or fender louvers reveals live airflow animations and downforce metrics.                      				                           |
+  4. Static, Passive    |  Build an interactive SVG/Image Hotspot Overlay where clicking pins on the swan-neck rear wing, S-duct, 			               |
+     Areo Explanations	|  or fender louvers reveals live airflow animations and downforce metrics.                      				                   |
 ------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-  5. Unreliable         |  Store active build selections (e.g., Python Green + Satin Black Magnesium Wheels) in localStorage 				                       |
-     Configorator State |  and update the DOM instantly via CSS custom properties (--accent-green) and image layer swaps.				                           |											
+  5. Unreliable         |  Store active build selections (e.g., Python Green + Satin Black Magnesium Wheels) in localStorage 				               |
+     Configorator State |  and update the DOM instantly via CSS custom properties (--accent-green) and image layer swaps.				                   |											
 ------------------------|----------------------------------------------------------------------------------------------------------------------------------|
   6. Silent Visuals	    |  Add a clean, non-intrusive Web Audio API / HTML5 <audio> Engine Rev button with a custom JS canvas waveform visualizer          |
-			                  |  that only plays on explicit user click.										                                                                     |
+			            |  that only plays on explicit user click.										                                                   |
 ------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-  7.Poor Contrast & 	  |  Use a matte obsidian background (#0B0D0E), carbon-fiber subtle borders (#1E2226), electric green accents for active states/CTAs,| 
-    Cluttered Nav       |  and a minimal 4-link floating glassmorphism navbar (backdrop-filter: blur(12px)).                 				                       |
+  7.Poor Contrast & 	|  Use a matte obsidian background (#0B0D0E), carbon-fiber subtle borders (#1E2226), electric green accents for active states/CTAs,| 
+    Cluttered Nav       |  and a minimal 4-link floating glassmorphism navbar (backdrop-filter: blur(12px)).                 				               |
                         |                                                                                                                                  |
 ------------------------------------------------------------------------------------------------------------------------------------------------------------																					
