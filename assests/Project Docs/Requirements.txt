@@ -1,0 +1,15 @@
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+			|																   |
+    	   FlAWS	|  					       SOLUTIONS									   |
+------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+  1. Heavy 3D Engines   | Use CSS 3D transforms (perspective, rotateY), lightweight <video> hero loops with preload="metadata",  			   |                
+   & Lag                | and IntersectionObserver to lazy-load high-res gallery assets only when scrolled into view.					   |
+-----------------------	| ---------------------------------------------------------------------------------------------------------------------------------|
+  2. Overloaded 	|  Group specs into 3 interactive tabs (Engine: 4.0L Flat-6 / 525 PS, Aero: 860 kg Downforce / DRS, Chassis: 9,000 RPM / PDK) 
+     Spec Walls         |  with animated JS number counters triggered on scroll. 	       
+-----------------------	| ---------------------------------------------------------------------------------------------------------------------------------
+  3. Lossing Sight      |
+     of the car		|
+			|
+			|
