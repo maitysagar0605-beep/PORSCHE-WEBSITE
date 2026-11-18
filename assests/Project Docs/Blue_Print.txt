@@ -42,3 +42,7 @@
        > A writing box for User's Review 
        > Contact Developer gmail- maitysagar0605@gmail.com(link) github- https://github.com/maitysagar0605-beep(link) 
        > Built by maitysagar0605-beep® with ♥ • © 2026 All Rights Reserved
+   
+  3. Addiional Featuers:
+     > A theme music should always be playing and if user wants he/she should able to pause the background music
+     > In some animations try to add the actual sound of the exhaust car PORSCHE 911 GT RS
