@@ -10,3 +10,35 @@
      > Featuring the one and only PORSCHE 911 GT3 RS
      > Something nobody seen before!!!!
      > Amaze Everybody
+  
+  2. Main Sections:
+
+    a) Header Section:
+        > Logo of PORSCHE
+        > Brand Tagline: "Driven by Dreams"
+        > Top Navigation Cotainer From Where Users can easily trackdown all the different sections of the website
+    b) Hero Section:
+        > Features the Actual Car with Smooth transitions & animations
+        > Basic Details about it with animations
+        > Main Idea to building this masterpeiece
+        > In the display car container there should be a link or button to view the in 3D so one can see the 360 dgree view of 
+    
+    c) History Section:
+        > History of PORSCHE Company
+        > Description of some other noteable car models of the company with images, aslo add smooth animations and transitions
+        > Breif heirarchy of building cars (metion the previous history of making war tanks)
+     
+    d) Brief Descriptions of the designers, engineers behind building this masterpeice.
+   
+    e) Specifications of the car:
+        > Top Speed
+        > 0-100-0 in what time
+        > Interior details 
+        > Aerodynamics Descriptions
+        > With Different card structure, transitions and smooth animations
+
+    f) Footer Sections:
+       > A star rating section
+       > A writing box for User's Review 
+       > Contact Developer gmail- maitysagar0605@gmail.com(link) github- https://github.com/maitysagar0605-beep(link) 
+       > Built by maitysagar0605-beep® • © 2026 All Rights Reserved
