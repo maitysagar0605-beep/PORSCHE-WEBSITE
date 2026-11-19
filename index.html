@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="--accent-color: #39FF14; --accent-glow: rgba(57, 255, 20, 0.35);">
+<html lang="en" style="--accent-color: #39FF14; --accent-glow: rgba(57, 255, 20, 0.35); --wheel-accent: #1E2226;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,17 +26,23 @@
       </div>
     </a>
 
-    <nav class="nav-links" aria-label="Primary Navigation">
-      <a href="#hero" class="nav-link active">911 GT3 RS</a>
-      <a href="#studio" class="nav-link">Aero &amp; Studio</a>
-      <a href="#heritage" class="nav-link">Heritage &amp; Team</a>
-      <a href="#specs" class="nav-link">Specs &amp; Reviews</a>
+    <nav id="primaryNav" class="nav-links" aria-label="Primary Navigation">
+      <a href="#hero" class="nav-link active" data-section="hero">911 GT3 RS</a>
+      <a href="#studio" class="nav-link" data-section="studio">Aero &amp; Studio</a>
+      <a href="#heritage" class="nav-link" data-section="heritage">Heritage &amp; Team</a>
+      <a href="#specs" class="nav-link" data-section="specs">Specs &amp; Reviews</a>
     </nav>
 
-    <div class="audio-controls">
+    <div class="nav-actions">
       <button id="themeAudioBtn" class="audio-pill" aria-pressed="false" title="Toggle Ambient Synth Theme">
         <span class="pulse-dot"></span>
         <span id="themeAudioLabel">THEME: OFF</span>
+      </button>
+
+      <button id="mobileMenuBtn" class="mobile-menu-btn" aria-expanded="false" aria-controls="primaryNav" aria-label="Toggle Navigation Menu">
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
     </div>
   </header>
@@ -46,7 +52,7 @@
     <section id="hero" class="hero-section">
       <div class="hero-container">
         <div class="hero-copy reveal-up">
-          <div class="eyebrow-tag">TYPE 992 • NATURALLY ASPIRATED TRACK WEAPON</div>
+          <div class="eyebrow-tag">TYPE 911 • NATURALLY ASPIRATED TRACK WEAPON</div>
           <h1 class="hero-title">911 GT3 <span class="accent-text">RS</span></h1>
           <p class="hero-philosophy">
             Born in the Weissach wind tunnel. Every louver, swan-neck pylon, and active DRS flap exists for a single obsession: translating 525 PS of 9,000-RPM flat-six fury into 860 kg of relentless downforce.
@@ -69,7 +75,7 @@
 
           <div class="hero-cta-row">
             <button id="open360Btn" class="btn-primary">
-              <span>LAUNCH 360° 3D VIEW</span>
+              <span>LAUNCH 360° INSPECTOR</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                 <path d="M21 3v5h-5" />
@@ -89,7 +95,7 @@
         <div class="hero-stage-wrapper reveal-up">
           <div id="heroTiltCard" class="hero-car-card">
             <div class="card-telemetry-bar">
-              <span class="mono-tag">CHASSIS: WPZ-992-GT3RS</span>
+              <span class="mono-tag">CHASSIS: WPZ-911-GT3RS</span>
               <span id="activePaintBadge" class="mono-tag accent-badge">ACID GREEN</span>
             </div>
 
@@ -123,11 +129,16 @@
       </div>
 
       <div class="studio-split-layout">
-        <!-- Left Sticky Showcase (Never Lose Sight of the Car) -->
+        <!-- Left Sticky Showcase -->
         <div class="sticky-showcase-col">
           <div class="sticky-car-frame">
             <div class="frame-top-hud">
-              <span id="studioColorName" class="hud-title">ACID GREEN // WEISSACH SPEC</span>
+              <div class="hud-title-row">
+                <span id="studioColorName" class="hud-title">ACID GREEN // WEISSACH SPEC</span>
+                <span id="wheelFinishBadge" class="wheel-pill-indicator">
+                  <i class="wheel-dot-live"></i> MAGNESIUM SPEC
+                </span>
+              </div>
               <span id="studioWheelName" class="hud-sub">20"/21" SATIN BLACK FORGED MAGNESIUM</span>
             </div>
 
@@ -157,21 +168,21 @@
                 </g>
 
                 <!-- Hotspot Pin 1: Swan-Neck Rear Wing & DRS -->
-                <g class="aero-pin active" data-aero="wing" transform="translate(415, 118)">
+                <g class="aero-pin active" data-aero="wing" transform="translate(415, 118)" tabindex="0" role="button" aria-label="Inspect DRS Rear Wing">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">01 DRS WING</text>
                 </g>
 
                 <!-- Hotspot Pin 2: Central Radiator & S-Duct -->
-                <g class="aero-pin" data-aero="sduct" transform="translate(215, 232)">
+                <g class="aero-pin" data-aero="sduct" transform="translate(215, 232)" tabindex="0" role="button" aria-label="Inspect Central S-Duct">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">02 S-DUCT</text>
                 </g>
 
                 <!-- Hotspot Pin 3: Front Fender Louvers & Diffuser -->
-                <g class="aero-pin" data-aero="louvers" transform="translate(345, 265)">
+                <g class="aero-pin" data-aero="louvers" transform="translate(345, 265)" tabindex="0" role="button" aria-label="Inspect Fender Louvers">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">03 LOUVERS</text>
@@ -248,14 +259,32 @@
             <div class="control-group">
               <label class="control-label">FORGED MAGNESIUM WHEEL PACKAGE</label>
               <div class="wheel-grid" id="wheelOptions">
-                <button class="wheel-btn active" data-wheel='20"/21" SATIN BLACK FORGED MAGNESIUM'>
-                  Satin Black Magnesium
+                <button
+                  class="wheel-btn active"
+                  data-wheel='20"/21" SATIN BLACK FORGED MAGNESIUM'
+                  data-wheel-color="#2B3036"
+                  data-wheel-tag="SATIN BLACK"
+                >
+                  <span class="wheel-swatch" style="background: radial-gradient(circle, #4a5058 30%, #15181b 75%);"></span>
+                  <span>Satin Black Magnesium</span>
                 </button>
-                <button class="wheel-btn" data-wheel='20"/21" PYRO RED WEISSACH FORGED'>
-                  Pyro Red Weissach
+                <button
+                  class="wheel-btn"
+                  data-wheel='20"/21" PYRO RED WEISSACH FORGED'
+                  data-wheel-color="#E11D48"
+                  data-wheel-tag="PYRO RED"
+                >
+                  <span class="wheel-swatch" style="background: radial-gradient(circle, #ff4d6d 30%, #9f1239 75%);"></span>
+                  <span>Pyro Red Weissach</span>
                 </button>
-                <button class="wheel-btn" data-wheel='20"/21" SATIN NEODYME RACE SPEC'>
-                  Satin Neodyme
+                <button
+                  class="wheel-btn"
+                  data-wheel='20"/21" SATIN NEODYME RACE SPEC'
+                  data-wheel-color="#D4AF37"
+                  data-wheel-tag="SATIN NEODYME"
+                >
+                  <span class="wheel-swatch" style="background: radial-gradient(circle, #f3d576 30%, #9a7b2c 75%);"></span>
+                  <span>Satin Neodyme</span>
                 </button>
               </div>
             </div>
@@ -292,7 +321,7 @@
         <h2>FROM HEAVY ARMOR TO TRACK PERFECTION</h2>
       </div>
 
-      <!-- Porsche Origins & Wartime Engineering Timeline -->
+      <!-- Porsche Origins & Engineering Timeline -->
       <div class="timeline-grid">
         <article class="timeline-card reveal-up">
           <span class="year-badge">1931 • STUTTGART</span>
@@ -303,10 +332,10 @@
         </article>
 
         <article class="timeline-card reveal-up">
-          <span class="year-badge">1939–1945 • HEAVY ARMOR ERA</span>
-          <h3>Wartime Tank &amp; Hybrid Drive Engineering</h3>
+          <span class="year-badge">1939–1945 • HEAVY ARMOR &amp; TYPE 64</span>
+          <h3>Wartime Engineering &amp; Petrol-Electric Drive</h3>
           <p>
-            During WWII, Porsche's engineering bureau designed heavy armored vehicles—including the Tiger (P) prototype, the Ferdinand/Elefant tank destroyer, and the super-heavy Panzer VIII Maus—pioneering petrol-electric hybrid drive systems before returning exclusively to lightweight sports cars in 1948.
+            Alongside the streamlined Type 64 racer, Porsche's engineering bureau designed heavy armored vehicles—including the Tiger (P) prototype, Ferdinand/Elefant, and Panzer VIII Maus—pioneering petrol-electric hybrid drive systems before returning exclusively to sports cars in 1948.
           </p>
         </article>
 
@@ -357,7 +386,7 @@
 
       <!-- Architects & Engineers Behind the 911 GT3 RS -->
       <div class="team-section reveal-up">
-        <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 992 GT3 RS</h3>
+        <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 911 GT3 RS</h3>
         <div class="team-grid">
           <div class="team-card">
             <div class="role-tag">DIRECTOR, GT MODEL LINE</div>
@@ -371,7 +400,7 @@
             <div class="role-tag">VP STYLE PORSCHE</div>
             <h4>Michael Mauer</h4>
             <p>
-              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 992 widebody silhouette.
+              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 911 widebody silhouette.
             </p>
           </div>
 
@@ -379,7 +408,7 @@
             <div class="role-tag">BRAND AMBASSADOR &amp; TEST DRIVER</div>
             <h4>Jörg Bergmeister</h4>
             <p>
-              Piloted the 992 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
+              Piloted the 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
             </p>
           </div>
         </div>
@@ -388,9 +417,16 @@
 
     <!-- SPECIFICATIONS SECTION (3 INTERACTIVE TABS + SCROLL COUNTERS) -->
     <section id="specs" class="specs-section" style="background-image: linear-gradient(to bottom, #0B0D0E, rgba(11,13,14,0.88), #0B0D0E), url('assests/images/BG_IMG3.jfif');">
-      <div class="section-header reveal-up">
-        <span class="section-kicker">03 // TECHNICAL DATA &amp; TELEMETRY</span>
-        <h2>ENGINEERED WITHOUT COMPROMISE</h2>
+      <div class="section-header specs-header-flex reveal-up">
+        <div>
+          <span class="section-kicker">03 // TECHNICAL DATA &amp; TELEMETRY</span>
+          <h2>ENGINEERED WITHOUT COMPROMISE</h2>
+        </div>
+
+        <button id="weissachToggleBtn" class="weissach-pill" aria-pressed="false">
+          <span class="weissach-dot"></span>
+          <span id="weissachLabel">WEISSACH PACKAGE: OFF (1,450 KG)</span>
+        </button>
       </div>
 
       <!-- Animated Scroll Counter Strip -->
@@ -408,8 +444,8 @@
           <div class="counter-label">0–200 KM/H ACCELERATION</div>
         </div>
         <div class="counter-box">
-          <div class="counter-number"><span class="count-up" data-target="1450">0</span> <small>kg</small></div>
-          <div class="counter-label">DIN KERB WEIGHT</div>
+          <div class="counter-number"><span id="kerbWeightCounter" class="count-up" data-target="1450">0</span> <small>kg</small></div>
+          <div class="counter-label" id="kerbWeightLabel">DIN KERB WEIGHT (STANDARD)</div>
         </div>
       </div>
 
@@ -506,7 +542,7 @@
           <button type="button" class="star-btn active" data-star="3" aria-label="3 Stars">★</button>
           <button type="button" class="star-btn active" data-star="4" aria-label="4 Stars">★</button>
           <button type="button" class="star-btn active" data-star="5" aria-label="5 Stars">★</button>
-          <span id="ratingText" class="rating-label">5 / 5 — Track Perfection</span>
+          <span id="ratingText" class="rating-label">5 / 5 — Weissach Track Perfection</span>
         </div>
 
         <form id="reviewForm" class="review-form">
@@ -541,15 +577,15 @@
     </div>
   </footer>
 
-  <!-- INTERACTIVE 360° 3D INSPECTION MODAL -->
-  <div id="modal360" class="modal-360" aria-hidden="true">
+  <!-- INTERACTIVE 360° STUDIO INSPECTOR MODAL -->
+  <div id="modal360" class="modal-360" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal360Title">
     <div class="modal-360-content">
       <div class="modal-360-header">
         <div>
-          <span class="mono-tag accent-badge">INTERACTIVE 360° CSS 3D STAGE</span>
-          <h3>PORSCHE 911 GT3 RS — DRAG TO ROTATE</h3>
+          <span class="mono-tag accent-badge">INTERACTIVE 360° STUDIO INSPECTOR</span>
+          <h3 id="modal360Title">PORSCHE 911 GT3 RS — SCRUB ANGLES OR ZOOM</h3>
         </div>
-        <button id="close360Btn" class="close-modal-btn" aria-label="Close 3D View">✕</button>
+        <button id="close360Btn" class="close-modal-btn" aria-label="Close 360 Inspector">✕</button>
       </div>
 
       <div id="stage360Viewport" class="stage-360-viewport">
@@ -562,11 +598,14 @@
           />
           <div class="orbit-ring"></div>
         </div>
-        <div class="angle-hud">YAW ANGLE: <span id="yawReadout">0°</span> • DRAG OR USE SLIDER</div>
+        <div class="angle-hud">
+          ANGLE: <span id="yawReadout">0°</span> • <span id="frameLabelReadout">FRONT-3/4 HERO</span> • DRAG OR USE ARROWS
+        </div>
       </div>
 
       <div class="modal-360-footer">
-        <input type="range" id="angleSlider" min="-180" max="180" value="0" aria-label="Rotate 360 degrees" />
+        <input type="range" id="angleSlider" min="0" max="359" value="0" aria-label="Scrub 360 degree angle" />
+        <button id="zoomInspectBtn" class="btn-secondary">ZOOM: 1.0x</button>
         <button id="autoSpinBtn" class="btn-secondary">AUTO-ORBIT: ON</button>
       </div>
     </div>

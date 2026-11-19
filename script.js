@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PORSCHE 911 GT3 RS — INTERACTIVE TELEMETRY, 3D ORBIT, AUDIO & STATE ENGINE
+   PORSCHE 911 GT3 RS — INTERACTIVE TELEMETRY, 3D INSPECTOR, AUDIO & STATE ENGINE
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     hex: '#39FF14',
     glow: 'rgba(57, 255, 20, 0.35)',
     img: 'assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif',
-    wheel: '20"/21" SATIN BLACK FORGED MAGNESIUM'
+    wheel: '20"/21" SATIN BLACK FORGED MAGNESIUM',
+    wheelColor: '#2B3036',
+    wheelTag: 'SATIN BLACK'
   };
 
   let activeBuild = { ...defaultBuild };
@@ -33,11 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const activePaintBadge = document.getElementById('activePaintBadge');
   const studioColorName = document.getElementById('studioColorName');
   const studioWheelName = document.getElementById('studioWheelName');
+  const wheelFinishBadge = document.getElementById('wheelFinishBadge');
   const saveStatus = document.getElementById('saveStatus');
 
   function applyBuildToDOM(build) {
     rootEl.style.setProperty('--accent-color', build.hex);
     rootEl.style.setProperty('--accent-glow', build.glow);
+    rootEl.style.setProperty('--wheel-accent', build.wheelColor || '#2B3036');
 
     heroCarImg.src = build.img;
     studioCarImg.src = build.img;
@@ -46,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activePaintBadge.textContent = build.color.toUpperCase();
     studioColorName.textContent = `${build.color.toUpperCase()} // WEISSACH SPEC`;
     studioWheelName.textContent = build.wheel;
+    if (wheelFinishBadge) {
+      wheelFinishBadge.innerHTML = `<i class="wheel-dot-live"></i> ${build.wheelTag || 'MAGNESIUM SPEC'}`;
+    }
 
     document.querySelectorAll('.swatch-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.color === build.color);
@@ -81,12 +88,52 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.wheel-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       activeBuild.wheel = btn.dataset.wheel;
+      activeBuild.wheelColor = btn.dataset.wheelColor || '#2B3036';
+      activeBuild.wheelTag = btn.dataset.wheelTag || 'MAGNESIUM SPEC';
       applyBuildToDOM(activeBuild);
     });
   });
 
   /* ------------------------------------------------------------------------
-     2. HERO 3D PERSPECTIVE TILT CARD
+     2. MOBILE MENU & NAVIGATION SCROLL-SPY
+     ------------------------------------------------------------------------ */
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const primaryNav = document.getElementById('primaryNav');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  if (mobileMenuBtn && primaryNav) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isOpen = primaryNav.classList.toggle('open');
+      mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    navLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        primaryNav.classList.remove('open');
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  const trackedSections = document.querySelectorAll('main section[id]');
+  const navSpyObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          navLinks.forEach((link) => {
+            link.classList.toggle('active', link.dataset.section === id);
+          });
+        }
+      });
+    },
+    { rootMargin: '-35% 0px -55% 0px' }
+  );
+
+  trackedSections.forEach((sec) => navSpyObserver.observe(sec));
+
+  /* ------------------------------------------------------------------------
+     3. HERO 3D PERSPECTIVE TILT CARD
      ------------------------------------------------------------------------ */
   const heroTiltCard = document.getElementById('heroTiltCard');
   if (heroTiltCard) {
@@ -103,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     3. INTERACTIVE 360° 3D INSPECTION MODAL
+     4. INTERACTIVE 360° STUDIO INSPECTOR MODAL (MULTI-FRAME + ZOOM + KEYS)
      ------------------------------------------------------------------------ */
   const modal360 = document.getElementById('modal360');
   const open360Btn = document.getElementById('open360Btn');
@@ -113,38 +160,76 @@ document.addEventListener('DOMContentLoaded', () => {
   const car360Object = document.getElementById('car360Object');
   const angleSlider = document.getElementById('angleSlider');
   const yawReadout = document.getElementById('yawReadout');
+  const frameLabelReadout = document.getElementById('frameLabelReadout');
   const autoSpinBtn = document.getElementById('autoSpinBtn');
+  const zoomInspectBtn = document.getElementById('zoomInspectBtn');
 
-  let currentYaw = 0;
+  const studioAngleFrames = [
+    { label: 'ACTIVE BUILD LIVERY', getImg: () => activeBuild.img },
+    { label: 'SHARK BLUE AERO PROFILE', getImg: () => 'assests/images/CAR_IMG_BLUE.jfif' },
+    { label: 'LAVA ORANGE TRACK SPEC', getImg: () => 'assests/images/CAR_IMG_ORANGE.jfif' },
+    { label: 'RACING YELLOW WEISSACH', getImg: () => 'assests/images/CAR_IMG_YELLOW.jfif' }
+  ];
+
+  let currentAngle = 0; // 0 to 359
   let isDragging360 = false;
   let startX360 = 0;
   let autoSpin = true;
+  let zoomLevel = 1;
   let spinRaf = null;
+  let lastFrameIdx = -1;
 
-  function setYawAngle(deg) {
-    currentYaw = ((deg + 180) % 360 + 360) % 360 - 180;
-    const rounded = Math.round(currentYaw);
-    car360Object.style.transform = `rotateY(${currentYaw}deg) rotateX(4deg)`;
+  function updateInspectorView(deg) {
+    currentAngle = ((deg % 360) + 360) % 360;
+    const rounded = Math.round(currentAngle);
+
+    // Subtle bounded 3D perspective tilt (-18deg to +18deg) so the image never flips backward
+    const boundedTiltY = Math.sin((currentAngle * Math.PI) / 180) * 18;
+    const boundedTiltX = Math.cos((currentAngle * Math.PI) / 180) * 4;
+    car360Object.style.transform = `scale(${zoomLevel}) rotateY(${boundedTiltY.toFixed(2)}deg) rotateX(${boundedTiltX.toFixed(2)}deg)`;
+
+    // Scrub across the 4 gallery angles smoothly every 90 degrees
+    const frameIdx = Math.floor(currentAngle / 90) % studioAngleFrames.length;
+    if (frameIdx !== lastFrameIdx) {
+      lastFrameIdx = frameIdx;
+      modal360Img.src = studioAngleFrames[frameIdx].getImg();
+      if (frameLabelReadout) {
+        frameLabelReadout.textContent = studioAngleFrames[frameIdx].label;
+      }
+    }
+
     angleSlider.value = rounded;
     yawReadout.textContent = `${rounded}°`;
   }
 
   function animate360Loop() {
-    if (autoSpin && modal360.classList.contains('open') && !isDragging360) {
-      setYawAngle(currentYaw + 0.65);
+    if (!modal360.classList.contains('open')) {
+      spinRaf = null;
+      return;
+    }
+    if (autoSpin && !isDragging360) {
+      updateInspectorView(currentAngle + 0.45);
     }
     spinRaf = requestAnimationFrame(animate360Loop);
   }
 
   function open360Modal() {
+    lastFrameIdx = -1;
     modal360.classList.add('open');
     modal360.setAttribute('aria-hidden', 'false');
-    if (!spinRaf) animate360Loop();
+    updateInspectorView(currentAngle);
+    if (!spinRaf) {
+      spinRaf = requestAnimationFrame(animate360Loop);
+    }
   }
 
   function close360Modal() {
     modal360.classList.remove('open');
     modal360.setAttribute('aria-hidden', 'true');
+    if (spinRaf) {
+      cancelAnimationFrame(spinRaf);
+      spinRaf = null;
+    }
   }
 
   open360Btn.addEventListener('click', open360Modal);
@@ -158,13 +243,21 @@ document.addEventListener('DOMContentLoaded', () => {
   angleSlider.addEventListener('input', (e) => {
     autoSpin = false;
     autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
-    setYawAngle(parseFloat(e.target.value));
+    updateInspectorView(parseFloat(e.target.value));
   });
 
   autoSpinBtn.addEventListener('click', () => {
     autoSpin = !autoSpin;
     autoSpinBtn.textContent = `AUTO-ORBIT: ${autoSpin ? 'ON' : 'OFF'}`;
   });
+
+  if (zoomInspectBtn) {
+    zoomInspectBtn.addEventListener('click', () => {
+      zoomLevel = zoomLevel === 1 ? 1.32 : 1;
+      zoomInspectBtn.textContent = `ZOOM: ${zoomLevel.toFixed(1)}x`;
+      updateInspectorView(currentAngle);
+    });
+  }
 
   stage360Viewport.addEventListener('pointerdown', (e) => {
     isDragging360 = true;
@@ -177,15 +270,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isDragging360) return;
     const deltaX = e.clientX - startX360;
     startX360 = e.clientX;
-    setYawAngle(currentYaw + deltaX * 0.6);
+    updateInspectorView(currentAngle + deltaX * 0.65);
   });
 
   window.addEventListener('pointerup', () => {
     isDragging360 = false;
   });
 
+  window.addEventListener('keydown', (e) => {
+    if (!modal360.classList.contains('open')) return;
+    if (e.key === 'Escape') {
+      close360Modal();
+    } else if (e.key === 'ArrowRight') {
+      autoSpin = false;
+      autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
+      updateInspectorView(currentAngle + 15);
+    } else if (e.key === 'ArrowLeft') {
+      autoSpin = false;
+      autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
+      updateInspectorView(currentAngle - 15);
+    }
+  });
+
   /* ------------------------------------------------------------------------
-     4. INTERACTIVE SVG AERO HOTSPOT OVERLAY
+     5. INTERACTIVE SVG AERO HOTSPOT OVERLAY
      ------------------------------------------------------------------------ */
   const aeroData = {
     wing: {
@@ -218,20 +326,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const aeroDownforceVal = document.getElementById('aeroDownforceVal');
   const aeroTotalVal = document.getElementById('aeroTotalVal');
 
+  function activateAeroPin(pin) {
+    const key = pin.dataset.aero;
+    const info = aeroData[key];
+    if (!info) return;
+
+    aeroPins.forEach((p) => p.classList.remove('active'));
+    pin.classList.add('active');
+
+    aeroCode.textContent = info.code;
+    aeroTitle.textContent = info.title;
+    aeroDescription.textContent = info.desc;
+    aeroDownforceVal.textContent = info.load200;
+    aeroTotalVal.textContent = info.load285;
+  }
+
   aeroPins.forEach((pin) => {
-    pin.addEventListener('click', () => {
-      const key = pin.dataset.aero;
-      const info = aeroData[key];
-      if (!info) return;
-
-      aeroPins.forEach((p) => p.classList.remove('active'));
-      pin.classList.add('active');
-
-      aeroCode.textContent = info.code;
-      aeroTitle.textContent = info.title;
-      aeroDescription.textContent = info.desc;
-      aeroDownforceVal.textContent = info.load200;
-      aeroTotalVal.textContent = info.load285;
+    pin.addEventListener('click', () => activateAeroPin(pin));
+    pin.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activateAeroPin(pin);
+      }
     });
   });
 
@@ -247,13 +363,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------------------------------------------------------------
-     5. WEB AUDIO API: AMBIENT THEME MUSIC + 9,000 RPM FLAT-6 EXHAUST REV
-        WITH LIVE CANVAS WAVEFORM VISUALIZER
+     6. WEB AUDIO API: AMBIENT THEME MUSIC + 9,000 RPM FLAT-6 EXHAUST REV
+        WITH ON-DEMAND CANVAS WAVEFORM VISUALIZER
      ------------------------------------------------------------------------ */
   let audioCtx = null;
   let themePlaying = false;
   let themeNodes = [];
   let isRevving = false;
+  let waveRaf = null;
 
   const themeAudioBtn = document.getElementById('themeAudioBtn');
   const themeAudioLabel = document.getElementById('themeAudioLabel');
@@ -272,7 +389,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Ambient Motorsport Synth Pad (User Toggleable)
+  function makeDistortionCurve(amount = 40) {
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
+    }
+    return curve;
+  }
+
   function toggleThemeMusic() {
     ensureAudioContext();
     if (!themePlaying) {
@@ -286,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filter.frequency.setValueAtTime(340, audioCtx.currentTime);
       filter.connect(masterGain);
 
-      const freqs = [55, 82.41, 110, 164.81]; // Deep D/A atmospheric chord
+      const freqs = [55, 82.41, 110, 164.81];
       const oscs = freqs.map((f, idx) => {
         const osc = audioCtx.createOscillator();
         osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
@@ -321,42 +447,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
   themeAudioBtn.addEventListener('click', toggleThemeMusic);
 
-  // Synthesized 4.0L Naturally Aspirated Flat-6 9,000 RPM Exhaust Rev
+  // Canvas Waveform Visualizer (Active during rev, static idle baseline otherwise)
+  let wavePhase = 0;
+  function drawIdleBaseline() {
+    const w = exhaustCanvas.width;
+    const h = exhaustCanvas.height;
+    canvasCtx.clearRect(0, 0, w, h);
+    const accent = getComputedStyle(rootEl).getPropertyValue('--accent-color').trim() || '#39FF14';
+    canvasCtx.strokeStyle = accent;
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = h / 2 + Math.sin(x * 0.05) * 2.2 * Math.sin((x / w) * Math.PI);
+      if (x === 0) canvasCtx.moveTo(x, y);
+      else canvasCtx.lineTo(x, y);
+    }
+    canvasCtx.stroke();
+  }
+
+  function renderWaveform() {
+    if (!isRevving) {
+      drawIdleBaseline();
+      waveRaf = null;
+      return;
+    }
+
+    const w = exhaustCanvas.width;
+    const h = exhaustCanvas.height;
+    canvasCtx.clearRect(0, 0, w, h);
+
+    const accent = getComputedStyle(rootEl).getPropertyValue('--accent-color').trim() || '#39FF14';
+    canvasCtx.strokeStyle = accent;
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+
+    wavePhase += 0.45;
+    for (let x = 0; x < w; x++) {
+      const y = h / 2 + Math.sin(x * 0.16 + wavePhase) * 13 * Math.sin((x / w) * Math.PI);
+      if (x === 0) canvasCtx.moveTo(x, y);
+      else canvasCtx.lineTo(x, y);
+    }
+    canvasCtx.stroke();
+    waveRaf = requestAnimationFrame(renderWaveform);
+  }
+
+  drawIdleBaseline();
+
   function triggerFlatSixRev() {
     if (isRevving) return;
     ensureAudioContext();
     isRevving = true;
+    if (!waveRaf) {
+      waveRaf = requestAnimationFrame(renderWaveform);
+    }
 
     const now = audioCtx.currentTime;
     const duration = 2.4;
 
     const masterGain = audioCtx.createGain();
     masterGain.gain.setValueAtTime(0.001, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.24, now + 0.18);
-    masterGain.gain.exponentialRampToValueAtTime(0.28, now + 1.15);
+    masterGain.gain.exponentialRampToValueAtTime(0.22, now + 0.18);
+    masterGain.gain.exponentialRampToValueAtTime(0.26, now + 1.15);
     masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    const shaper = audioCtx.createWaveShaper();
+    shaper.curve = makeDistortionCurve(35);
+    shaper.oversample = '2x';
 
     const bandpass = audioCtx.createBiquadFilter();
     bandpass.type = 'bandpass';
     bandpass.frequency.setValueAtTime(220, now);
-    bandpass.frequency.exponentialRampToValueAtTime(980, now + 1.05);
+    bandpass.frequency.exponentialRampToValueAtTime(1050, now + 1.05);
     bandpass.frequency.exponentialRampToValueAtTime(260, now + duration);
-    bandpass.Q.setValueAtTime(1.6, now);
+    bandpass.Q.setValueAtTime(1.5, now);
 
+    shaper.connect(bandpass);
     bandpass.connect(masterGain);
     masterGain.connect(audioCtx.destination);
 
-    // 3 firing harmonics per revolution (6-cylinder boxer firing order cadence)
-    const harmonics = [1, 1.5, 3];
-    harmonics.forEach((mult) => {
+    // Firing harmonics + sub-bass boxer rumble
+    const harmonics = [
+      { mult: 0.5, type: 'triangle' },
+      { mult: 1, type: 'sawtooth' },
+      { mult: 1.5, type: 'sawtooth' },
+      { mult: 3, type: 'sawtooth' }
+    ];
+
+    harmonics.forEach(({ mult, type }) => {
       const osc = audioCtx.createOscillator();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(55 * mult, now); // Idle ~1,100 RPM
-      osc.frequency.exponentialRampToValueAtTime(225 * mult, now + 1.05); // Scream to 9,000 RPM
-      osc.frequency.exponentialRampToValueAtTime(75 * mult, now + 1.55); // Lift-off
-      osc.frequency.exponentialRampToValueAtTime(165 * mult, now + 1.85); // PDK downshift blip
+      osc.type = type;
+      osc.frequency.setValueAtTime(55 * mult, now);
+      osc.frequency.exponentialRampToValueAtTime(225 * mult, now + 1.05);
+      osc.frequency.exponentialRampToValueAtTime(75 * mult, now + 1.55);
+      osc.frequency.exponentialRampToValueAtTime(165 * mult, now + 1.85);
       osc.frequency.exponentialRampToValueAtTime(55 * mult, now + duration);
-      osc.connect(bandpass);
+      osc.connect(shaper);
       osc.start(now);
       osc.stop(now + duration);
     });
@@ -369,34 +554,8 @@ document.addEventListener('DOMContentLoaded', () => {
   heroRevBtn.addEventListener('click', triggerFlatSixRev);
   studioRevBtn.addEventListener('click', triggerFlatSixRev);
 
-  // Canvas Waveform Visualizer Loop
-  let wavePhase = 0;
-  function renderWaveform() {
-    const w = exhaustCanvas.width;
-    const h = exhaustCanvas.height;
-    canvasCtx.clearRect(0, 0, w, h);
-
-    const accent = getComputedStyle(rootEl).getPropertyValue('--accent-color').trim() || '#39FF14';
-    canvasCtx.strokeStyle = accent;
-    canvasCtx.lineWidth = 2;
-    canvasCtx.beginPath();
-
-    const amp = isRevving ? 13 : 2.5;
-    const freq = isRevving ? 0.16 : 0.05;
-    wavePhase += isRevving ? 0.45 : 0.08;
-
-    for (let x = 0; x < w; x++) {
-      const y = h / 2 + Math.sin(x * freq + wavePhase) * amp * Math.sin((x / w) * Math.PI);
-      if (x === 0) canvasCtx.moveTo(x, y);
-      else canvasCtx.lineTo(x, y);
-    }
-    canvasCtx.stroke();
-    requestAnimationFrame(renderWaveform);
-  }
-  renderWaveform();
-
   /* ------------------------------------------------------------------------
-     6. SPECIFICATIONS TABS & INTERSECTION OBSERVER SCROLL COUNTERS
+     7. SPECIFICATIONS TABS, WEISSACH PACKAGE TOGGLE & SCROLL COUNTERS
      ------------------------------------------------------------------------ */
   const specTabs = document.querySelectorAll('.spec-tab');
   const tabPanels = document.querySelectorAll('.tab-panel');
@@ -415,6 +574,29 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`tab-${target}`).classList.add('active');
     });
   });
+
+  const weissachToggleBtn = document.getElementById('weissachToggleBtn');
+  const weissachLabel = document.getElementById('weissachLabel');
+  const kerbWeightCounter = document.getElementById('kerbWeightCounter');
+  const kerbWeightLabel = document.getElementById('kerbWeightLabel');
+  let weissachEnabled = false;
+
+  if (weissachToggleBtn) {
+    weissachToggleBtn.addEventListener('click', () => {
+      weissachEnabled = !weissachEnabled;
+      const targetWeight = weissachEnabled ? '1435' : '1450';
+      weissachToggleBtn.classList.toggle('active', weissachEnabled);
+      weissachToggleBtn.setAttribute('aria-pressed', String(weissachEnabled));
+      weissachLabel.textContent = weissachEnabled
+        ? 'WEISSACH PACKAGE: ON (1,435 KG)'
+        : 'WEISSACH PACKAGE: OFF (1,450 KG)';
+      kerbWeightCounter.dataset.target = targetWeight;
+      kerbWeightCounter.textContent = targetWeight;
+      kerbWeightLabel.textContent = weissachEnabled
+        ? 'DIN KERB WEIGHT (WEISSACH)'
+        : 'DIN KERB WEIGHT (STANDARD)';
+    });
+  }
 
   // Animated Counters on Scroll
   let countersStarted = false;
@@ -460,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (countersBanner) observer.observe(countersBanner);
 
   /* ------------------------------------------------------------------------
-     7. FOOTER STAR RATING & PERSISTENT USER REVIEWS
+     8. FOOTER STAR RATING & PERSISTENT USER REVIEWS
      ------------------------------------------------------------------------ */
   const REVIEWS_KEY = 'porsche_gt3rs_reviews_v1';
   const starBtns = document.querySelectorAll('.star-btn');
