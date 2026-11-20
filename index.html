@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="--accent-color: #39FF14; --accent-glow: rgba(57, 255, 20, 0.35); --wheel-accent: #1E2226;">
+<html lang="en" style="--accent-color: #39FF14; --accent-glow: rgba(57, 255, 20, 0.35); --bg-hue: 0deg;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,11 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Three.js Import Map for WebGL 360° 3D Showroom -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Ambient Background Layers -->
-  <div class="bg-layer bg-effect" style="background-image: url('assests/images/BG_EFFECT.jfif');"></div>
+<!-- Ambient Background Layers (Pure CSS Color-Synced Lighting + Grid) -->
+  <div class="bg-layer bg-effect"></div>
+  <div class="bg-layer bg-aura"></div>
   <div class="bg-layer bg-grid"></div>
 
   <!-- Minimal 4-Link Floating Glassmorphism Navbar -->
@@ -33,17 +45,12 @@
       <a href="#specs" class="nav-link" data-section="specs">Specs &amp; Reviews</a>
     </nav>
 
-    <div class="nav-actions">
+    <div class="audio-controls">
       <button id="themeAudioBtn" class="audio-pill" aria-pressed="false" title="Toggle Ambient Synth Theme">
         <span class="pulse-dot"></span>
         <span id="themeAudioLabel">THEME: OFF</span>
       </button>
-
-      <button id="mobileMenuBtn" class="mobile-menu-btn" aria-expanded="false" aria-controls="primaryNav" aria-label="Toggle Navigation Menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+      <button id="mobileMenuBtn" class="mobile-menu-btn" aria-expanded="false" aria-controls="primaryNav" aria-label="Toggle Menu">☰</button>
     </div>
   </header>
 
@@ -52,6 +59,37 @@
     <section id="hero" class="hero-section">
       <div class="hero-container">
         <div class="hero-copy reveal-up">
+          <!-- Porsche Crest Shield Outline (Auto-syncs with --accent-color) -->
+          <div class="hero-crest-badge" aria-hidden="true">
+            <svg class="hero-crest-svg" viewBox="0 0 120 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M14 14 H106 V68 C106 105 84 128 60 138 C36 128 14 105 14 68 Z"
+                stroke="currentColor"
+                stroke-width="3.5"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M22 22 H98 V67 C98 99 79 119 60 128 C41 119 22 99 22 67 Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-opacity="0.75"
+              />
+              <line x1="22" y1="36" x2="98" y2="36" stroke="currentColor" stroke-width="1.5" />
+              <line x1="60" y1="36" x2="60" y2="128" stroke="currentColor" stroke-width="1.4" />
+              <line x1="22" y1="76" x2="98" y2="76" stroke="currentColor" stroke-width="1.4" />
+              <path
+                d="M46 56 H74 V79 C74 91 67 98 60 102 C53 98 46 91 46 79 Z"
+                fill="#0B0D0E"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <path d="M31 46 H51 M31 54 H51 M31 62 H51" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M69 86 H88 M69 94 H85 M69 102 H80" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M69 46 C74 44 79 47 84 44 M71 54 C76 52 81 55 86 52" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M34 86 C39 84 44 87 49 84 M36 94 C41 92 46 95 51 92" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </div>
+          
           <div class="eyebrow-tag">TYPE 911 • NATURALLY ASPIRATED TRACK WEAPON</div>
           <h1 class="hero-title">911 GT3 <span class="accent-text">RS</span></h1>
           <p class="hero-philosophy">
@@ -75,7 +113,7 @@
 
           <div class="hero-cta-row">
             <button id="open360Btn" class="btn-primary">
-              <span>LAUNCH 360° INSPECTOR</span>
+              <span>LAUNCH 360° 3D MODEL VIEW</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                 <path d="M21 3v5h-5" />
@@ -114,7 +152,7 @@
                 <canvas id="exhaustCanvas" width="220" height="36" aria-label="Exhaust audio waveform"></canvas>
                 <span class="mono-hint">FLAT-6 TITANIUM EXHAUST TELEMETRY</span>
               </div>
-              <button id="card360Trigger" class="mini-3d-btn">3D INSPECT ↻</button>
+              <button id="card360Trigger" class="mini-3d-btn">3D MODEL INSPECT ↻</button>
             </div>
           </div>
         </div>
@@ -133,13 +171,11 @@
         <div class="sticky-showcase-col">
           <div class="sticky-car-frame">
             <div class="frame-top-hud">
-              <div class="hud-title-row">
-                <span id="studioColorName" class="hud-title">ACID GREEN // WEISSACH SPEC</span>
-                <span id="wheelFinishBadge" class="wheel-pill-indicator">
-                  <i class="wheel-dot-live"></i> MAGNESIUM SPEC
-                </span>
+              <span id="studioColorName" class="hud-title">ACID GREEN // WEISSACH SPEC</span>
+              <div class="hud-sub-row">
+                <span id="studioWheelName" class="hud-sub">20"/21" SATIN BLACK FORGED MAGNESIUM</span>
+                <span id="wheelFinishBadge" class="wheel-live-pill"><i class="wheel-dot-live"></i> SATIN BLACK</span>
               </div>
-              <span id="studioWheelName" class="hud-sub">20"/21" SATIN BLACK FORGED MAGNESIUM</span>
             </div>
 
             <div class="sticky-image-stage">
@@ -168,21 +204,21 @@
                 </g>
 
                 <!-- Hotspot Pin 1: Swan-Neck Rear Wing & DRS -->
-                <g class="aero-pin active" data-aero="wing" transform="translate(415, 118)" tabindex="0" role="button" aria-label="Inspect DRS Rear Wing">
+                <g class="aero-pin active" data-aero="wing" tabindex="0" role="button" aria-label="Hotspot 01 DRS Wing" transform="translate(415, 118)">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">01 DRS WING</text>
                 </g>
 
                 <!-- Hotspot Pin 2: Central Radiator & S-Duct -->
-                <g class="aero-pin" data-aero="sduct" transform="translate(215, 232)" tabindex="0" role="button" aria-label="Inspect Central S-Duct">
+                <g class="aero-pin" data-aero="sduct" tabindex="0" role="button" aria-label="Hotspot 02 S-Duct" transform="translate(215, 232)">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">02 S-DUCT</text>
                 </g>
 
                 <!-- Hotspot Pin 3: Front Fender Louvers & Diffuser -->
-                <g class="aero-pin" data-aero="louvers" transform="translate(345, 265)" tabindex="0" role="button" aria-label="Inspect Fender Louvers">
+                <g class="aero-pin" data-aero="louvers" tabindex="0" role="button" aria-label="Hotspot 03 Louvers" transform="translate(345, 265)">
                   <circle class="pin-pulse" r="18" />
                   <circle class="pin-core" r="7" />
                   <text x="14" y="4" class="pin-label">03 LOUVERS</text>
@@ -199,13 +235,12 @@
 
         <!-- Right Scrolling Controls & Aero Breakdowns -->
         <div class="scrolling-controls-col">
-          <!-- Persistent Paint & Wheel Configurator -->
           <div class="glass-panel reveal-up">
             <div class="panel-header">
               <h3>EXTERIOR LIVERY &amp; CHASSIS</h3>
               <span class="saved-indicator" id="saveStatus">SYNCED TO LOCALSTORAGE</span>
             </div>
-            <p class="panel-desc">Select factory paintwork and forged wheel finish. Selections persist automatically across sessions.</p>
+            <p class="panel-desc">Select factory paintwork and forged wheel finish. Selections sync live with the 3D showroom and persist across sessions.</p>
 
             <div class="control-group">
               <label class="control-label">PAINT TO SAMPLE / SPECIAL COLOURS</label>
@@ -215,6 +250,7 @@
                   data-color="Acid Green"
                   data-hex="#39FF14"
                   data-glow="rgba(57, 255, 20, 0.35)"
+                  data-hue="0deg"
                   data-img="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
                 >
                   <span class="swatch-dot" style="background:#39FF14;"></span>
@@ -226,6 +262,7 @@
                   data-color="Shark Blue"
                   data-hex="#00B4FF"
                   data-glow="rgba(0, 180, 255, 0.35)"
+                  data-hue="92deg"
                   data-img="assests/images/CAR_IMG_BLUE.jfif"
                 >
                   <span class="swatch-dot" style="background:#00B4FF;"></span>
@@ -237,6 +274,7 @@
                   data-color="Lava Orange"
                   data-hex="#FF5500"
                   data-glow="rgba(255, 85, 0, 0.35)"
+                  data-hue="-88deg"
                   data-img="assests/images/CAR_IMG_ORANGE.jfif"
                 >
                   <span class="swatch-dot" style="background:#FF5500;"></span>
@@ -248,6 +286,7 @@
                   data-color="Racing Yellow"
                   data-hex="#FFD000"
                   data-glow="rgba(255, 208, 0, 0.35)"
+                  data-hue="-55deg"
                   data-img="assests/images/CAR_IMG_YELLOW.jfif"
                 >
                   <span class="swatch-dot" style="background:#FFD000;"></span>
@@ -265,25 +304,25 @@
                   data-wheel-color="#2B3036"
                   data-wheel-tag="SATIN BLACK"
                 >
-                  <span class="wheel-swatch" style="background: radial-gradient(circle, #4a5058 30%, #15181b 75%);"></span>
+                  <span class="swatch-dot" style="background:#2B3036; border:1px solid #555;"></span>
                   <span>Satin Black Magnesium</span>
                 </button>
                 <button
                   class="wheel-btn"
                   data-wheel='20"/21" PYRO RED WEISSACH FORGED'
-                  data-wheel-color="#E11D48"
+                  data-wheel-color="#D91E2A"
                   data-wheel-tag="PYRO RED"
                 >
-                  <span class="wheel-swatch" style="background: radial-gradient(circle, #ff4d6d 30%, #9f1239 75%);"></span>
+                  <span class="swatch-dot" style="background:#D91E2A;"></span>
                   <span>Pyro Red Weissach</span>
                 </button>
                 <button
                   class="wheel-btn"
                   data-wheel='20"/21" SATIN NEODYME RACE SPEC'
-                  data-wheel-color="#D4AF37"
+                  data-wheel-color="#C8A96E"
                   data-wheel-tag="SATIN NEODYME"
                 >
-                  <span class="wheel-swatch" style="background: radial-gradient(circle, #f3d576 30%, #9a7b2c 75%);"></span>
+                  <span class="swatch-dot" style="background:#C8A96E;"></span>
                   <span>Satin Neodyme</span>
                 </button>
               </div>
@@ -315,16 +354,24 @@
     </section>
 
     <!-- HISTORY & ENGINEERING MASTERS SECTION -->
-    <section id="heritage" class="heritage-section" style="background-image: linear-gradient(to bottom, #0B0D0E, rgba(11,13,14,0.82), #0B0D0E), url('assests/images/BG_IMG2.jfif');">
+    <section id="heritage" class="heritage-section">
       <div class="section-header reveal-up">
         <span class="section-kicker">02 // STUTTGART LEGACY &amp; ENGINEERING MINDS</span>
         <h2>FROM HEAVY ARMOR TO TRACK PERFECTION</h2>
       </div>
 
-      <!-- Porsche Origins & Engineering Timeline -->
       <div class="timeline-grid">
         <article class="timeline-card reveal-up">
-          <span class="year-badge">1931 • STUTTGART</span>
+          <span class="year-badge">1931 • STUTTGART
+            <svg class="era-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2v3" />
+              <circle cx="12" cy="7" r="2" />
+              <path d="M10.6 8.5 5 21" />
+              <path d="M13.4 8.5 19 21" />
+              <path d="M6.5 16h11" />
+              <path d="M12 14v4" />
+            </svg>
+          </span>
           <h3>Dr. Ing. h.c. F. Porsche GmbH</h3>
           <p>
             Founded by Ferdinand Porsche as an independent motor vehicle development and consulting bureau, pioneering torsion-bar suspension, aerodynamic streamliners, and high-efficiency engineering principles that still define every 911.
@@ -332,15 +379,28 @@
         </article>
 
         <article class="timeline-card reveal-up">
-          <span class="year-badge">1939–1945 • HEAVY ARMOR &amp; TYPE 64</span>
-          <h3>Wartime Engineering &amp; Petrol-Electric Drive</h3>
+          <span class="year-badge">1939–1945 • HEAVY ARMOR ERA
+            <svg class="era-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M12 7v10" />
+              <path d="M8 11h8" />
+            </svg>
+          </span>
+          <h3>Wartime Tank &amp; Hybrid Drive Engineering</h3>
           <p>
-            Alongside the streamlined Type 64 racer, Porsche's engineering bureau designed heavy armored vehicles—including the Tiger (P) prototype, Ferdinand/Elefant, and Panzer VIII Maus—pioneering petrol-electric hybrid drive systems before returning exclusively to sports cars in 1948.
+            During WWII, Porsche's engineering bureau designed heavy armored vehicles—including the Tiger (P) prototype, the Ferdinand/Elefant tank destroyer, and the super-heavy Panzer VIII Maus—pioneering petrol-electric hybrid drive systems before returning exclusively to lightweight sports cars in 1948.
           </p>
         </article>
 
         <article class="timeline-card reveal-up">
-          <span class="year-badge">1948–1963 • THE 356 &amp; 911</span>
+          <span class="year-badge">1948–1963 • THE 356 &amp; 911
+            <svg class="era-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.5" y="5" width="6.5" height="4.5" rx="1" transform="rotate(-32 5.75 7.25)" />
+              <rect x="15" y="5" width="6.5" height="4.5" rx="1" transform="rotate(32 18.25 7.25)" />
+              <path d="M7 9.2 12 17.5 17 9.2" />
+              <circle cx="12" cy="18.5" r="2.5" />
+            </svg>
+          </span>
           <h3>Birth of an Unmistakable Silhouette</h3>
           <p>
             Ferry Porsche realized his dream with the 1948 Porsche 356 "No. 1" Roadster, culminating in the 1963 debut of the air-cooled 911—establishing the rear-engine motorsport DNA carried forward to the 992 GT3 RS.
@@ -348,43 +408,56 @@
         </article>
       </div>
 
-      <!-- Notable Porsche Icons Gallery -->
       <div class="models-showcase reveal-up">
         <h3 class="sub-heading">NOTABLE PORSCHE MILESTONES</h3>
         <div class="models-grid">
           <div class="model-card">
-            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_YELLOW.jfif');">
+            <div class="model-visual" style="background-image: url('assests/images/911 Carrera.jfif');">
               <span class="model-era">1973 • CARRERA RS 2.7</span>
             </div>
             <div class="model-info">
-              <h4>911 Carrera RS 2.7</h4>
+              <h4 class="milestone-title">911 Carrera RS 2.7
+               <svg class="milestone-title-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"   aria-hidden="true">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                 <line x1="4" y1="22" x2="4" y2="15" />
+               </svg>
+              </h4>
               <p>The original "Rennsport" homologation icon featuring the legendary ducktail spoiler and 210 PS flat-six.</p>
             </div>
           </div>
 
           <div class="model-card">
-            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_BLUE.jfif');">
+            <div class="model-visual" style="background-image: url('assests/images/959.jfif');">
               <span class="model-era">1986 • GROUP B PIONEER</span>
             </div>
             <div class="model-info">
-              <h4>Porsche 959</h4>
+              <h4 class="milestone-title">Porsche 959
+                 <svg class="milestone-title-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"   aria-hidden="true">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                 <line x1="4" y1="22" x2="4" y2="15" />
+               </svg>
+              </h4>
               <p>Twin-turbocharged all-wheel-drive technological tour de force that redefined supercar aerodynamics and telemetry.</p>
             </div>
           </div>
 
           <div class="model-card">
-            <div class="model-visual" style="background-image: url('assests/images/CAR_IMG_ORANGE.jfif');">
+            <div class="model-visual" style="background-image: url('assests/images/918 Spyder.jfif');">
               <span class="model-era">2013 • HYBRID HYPERCAR</span>
             </div>
             <div class="model-info">
-              <h4>Porsche 918 Spyder</h4>
+              <h4 class="milestone-title">Porsche 918 Spyder
+                 <svg class="milestone-title-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"   aria-hidden="true">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                 <line x1="4" y1="22" x2="4" y2="15" />
+               </svg>
+              </h4>
               <p>887 PS V8 plug-in hybrid hypercar that shattered the Nürburgring 7-minute barrier with Weissach aero.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Architects & Engineers Behind the 911 GT3 RS -->
       <div class="team-section reveal-up">
         <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 911 GT3 RS</h3>
         <div class="team-grid">
@@ -400,7 +473,7 @@
             <div class="role-tag">VP STYLE PORSCHE</div>
             <h4>Michael Mauer</h4>
             <p>
-              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 911 widebody silhouette.
+              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 992 widebody silhouette.
             </p>
           </div>
 
@@ -408,23 +481,22 @@
             <div class="role-tag">BRAND AMBASSADOR &amp; TEST DRIVER</div>
             <h4>Jörg Bergmeister</h4>
             <p>
-              Piloted the 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
+              Piloted the 992 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- SPECIFICATIONS SECTION (3 INTERACTIVE TABS + SCROLL COUNTERS) -->
-    <section id="specs" class="specs-section" style="background-image: linear-gradient(to bottom, #0B0D0E, rgba(11,13,14,0.88), #0B0D0E), url('assests/images/BG_IMG3.jfif');">
-      <div class="section-header specs-header-flex reveal-up">
-        <div>
-          <span class="section-kicker">03 // TECHNICAL DATA &amp; TELEMETRY</span>
-          <h2>ENGINEERED WITHOUT COMPROMISE</h2>
-        </div>
+    <!-- SPECIFICATIONS SECTION (3 INTERACTIVE TABS + WEISSACH TOGGLE + SCROLL COUNTERS) -->
+    <section id="specs" class="specs-section">
+      <div class="section-header reveal-up">
+        <span class="section-kicker">03 // TECHNICAL DATA &amp; TELEMETRY</span>
+        <h2>ENGINEERED WITHOUT COMPROMISE</h2>
+      </div>
 
-        <button id="weissachToggleBtn" class="weissach-pill" aria-pressed="false">
-          <span class="weissach-dot"></span>
+      <div class="weissach-strip reveal-up">
+        <button id="weissachToggleBtn" class="hud-toggle-btn" aria-pressed="false">
           <span id="weissachLabel">WEISSACH PACKAGE: OFF (1,450 KG)</span>
         </button>
       </div>
@@ -432,21 +504,52 @@
       <!-- Animated Scroll Counter Strip -->
       <div class="counters-banner reveal-up" id="countersBanner">
         <div class="counter-box">
-          <div class="counter-number"><span class="count-up" data-target="296">0</span> <small>km/h</small></div>
+          <div class="counter-top">
+            <svg class="counter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 14l4-4" />
+              <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+            </svg>
+            <div class="counter-number"><span class="count-up" data-target="296">0</span> <small>km/h</small></div>
+          </div>
           <div class="counter-label">TOP TRACK SPEED</div>
         </div>
+
         <div class="counter-box">
-          <div class="counter-number"><span class="count-up" data-target="3.2" data-decimals="1">0.0</span> <small>s</small></div>
+          <div class="counter-top">
+            <svg class="counter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9v4l2 2" />
+              <path d="M5 3L2 6" />
+              <path d="M22 6l-3-3" />
+              <path d="M10 2h4" />
+            </svg>
+            <div class="counter-number"><span class="count-up" data-target="3.2" data-decimals="1">0.0</span> <small>s</small></div>
+          </div>
           <div class="counter-label">0–100 KM/H SPRINT</div>
         </div>
+
         <div class="counter-box">
-          <div class="counter-number"><span class="count-up" data-target="10.6" data-decimals="1">0.0</span> <small>s</small></div>
+          <div class="counter-top">
+            <svg class="counter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <div class="counter-number"><span class="count-up" data-target="10.6" data-decimals="1">0.0</span> <small>s</small></div>
+          </div>
           <div class="counter-label">0–200 KM/H ACCELERATION</div>
         </div>
+
         <div class="counter-box">
-          <div class="counter-number"><span id="kerbWeightCounter" class="count-up" data-target="1450">0</span> <small>kg</small></div>
-          <div class="counter-label" id="kerbWeightLabel">DIN KERB WEIGHT (STANDARD)</div>
+          <div class="counter-top">
+            <svg class="counter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+              <line x1="16" y1="8" x2="2" y2="22" />
+              <line x1="17.5" y1="15" x2="9" y2="15" />
+            </svg>
+            <div class="counter-number"><span id="kerbWeightCounter" class="count-up" data-target="1450">0</span> <small>kg</small></div>
+          </div>
+          <div id="kerbWeightLabel" class="counter-label">DIN KERB WEIGHT (STANDARD)</div>
         </div>
+      </div>
       </div>
 
       <!-- 3 Interactive Tabs: Engine / Aero / Chassis & Interior -->
@@ -463,7 +566,6 @@
           </button>
         </div>
 
-        <!-- Tab 1: Engine & Performance -->
         <div class="tab-panel active" id="tab-engine">
           <div class="spec-cards-grid">
             <div class="spec-card">
@@ -484,7 +586,6 @@
           </div>
         </div>
 
-        <!-- Tab 2: Aerodynamics -->
         <div class="tab-panel" id="tab-aero">
           <div class="spec-cards-grid">
             <div class="spec-card">
@@ -505,7 +606,6 @@
           </div>
         </div>
 
-        <!-- Tab 3: Chassis & Interior -->
         <div class="tab-panel" id="tab-chassis">
           <div class="spec-cards-grid">
             <div class="spec-card">
@@ -542,7 +642,7 @@
           <button type="button" class="star-btn active" data-star="3" aria-label="3 Stars">★</button>
           <button type="button" class="star-btn active" data-star="4" aria-label="4 Stars">★</button>
           <button type="button" class="star-btn active" data-star="5" aria-label="5 Stars">★</button>
-          <span id="ratingText" class="rating-label">5 / 5 — Weissach Track Perfection</span>
+          <span id="ratingText" class="rating-label">5 / 5 — Track Perfection</span>
         </div>
 
         <form id="reviewForm" class="review-form">
@@ -558,7 +658,7 @@
         <img src="assests/images/LOGO2_IMG.png" alt="Porsche Emblem" class="footer-crest" />
         <h4>PORSCHE 911 GT3 RS SHOWCASE</h4>
         <p class="footer-note">
-          Engineered with pure HTML5, CSS3 3D perspective transforms, and Web Audio API flat-six acoustic synthesis.
+          Engineered with HTML5, CSS3, Three.js WebGL 3D showroom rendering, and Web Audio API flat-six acoustic synthesis.
         </p>
 
         <div class="contact-links">
@@ -577,40 +677,48 @@
     </div>
   </footer>
 
-  <!-- INTERACTIVE 360° STUDIO INSPECTOR MODAL -->
-  <div id="modal360" class="modal-360" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal360Title">
+  <!-- INTERACTIVE 360° WEBGL 3D INSPECTION MODAL (PUBG SHOWROOM STYLE) -->
+  <div id="modal360" class="modal-360" aria-hidden="true">
     <div class="modal-360-content">
       <div class="modal-360-header">
         <div>
-          <span class="mono-tag accent-badge">INTERACTIVE 360° STUDIO INSPECTOR</span>
-          <h3 id="modal360Title">PORSCHE 911 GT3 RS — SCRUB ANGLES OR ZOOM</h3>
+          <span class="mono-tag accent-badge" id="modelSourceBadge">LOADING 3D CHASSIS...</span>
+          <h3>PORSCHE 911 GT3 RS — 360° FREE ORBIT</h3>
         </div>
-        <button id="close360Btn" class="close-modal-btn" aria-label="Close 360 Inspector">✕</button>
+        <button id="close360Btn" class="close-modal-btn" aria-label="Close 3D View">✕</button>
       </div>
 
       <div id="stage360Viewport" class="stage-360-viewport">
-        <div id="car360Object" class="car-360-object">
-          <img
-            id="modal360Img"
-            src="assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif"
-            alt="360 View Porsche 911 GT3 RS"
-            draggable="false"
-          />
-          <div class="orbit-ring"></div>
+        <canvas id="car3dCanvas"></canvas>
+
+        <!-- Sleek Loading Overlay While .glb Downloads -->
+        <div id="modelLoaderOverlay" class="model-loader-overlay" aria-live="polite">
+          <div class="loader-spinner"></div>
+          <span class="loader-title" id="loaderTitle">DOWNLOADING 911 GT3 RS CHASSIS...</span>
+          <span class="loader-progress" id="loaderProgress">0%</span>
         </div>
+
+        <!-- PUBG-Style Camera Angle Presets -->
+        <div class="cam-presets-bar">
+          <button type="button" class="cam-preset-btn active" data-cam="hero">3/4 HERO</button>
+          <button type="button" class="cam-preset-btn" data-cam="front">FRONT AERO</button>
+          <button type="button" class="cam-preset-btn" data-cam="side">PROFILE</button>
+          <button type="button" class="cam-preset-btn" data-cam="rear">SWAN-NECK WING</button>
+        </div>
+
         <div class="angle-hud">
-          ANGLE: <span id="yawReadout">0°</span> • <span id="frameLabelReadout">FRONT-3/4 HERO</span> • DRAG OR USE ARROWS
+          YAW: <span id="yawReadout">42°</span> • DRAG TO ORBIT • SCROLL TO ZOOM
         </div>
       </div>
 
       <div class="modal-360-footer">
-        <input type="range" id="angleSlider" min="0" max="359" value="0" aria-label="Scrub 360 degree angle" />
-        <button id="zoomInspectBtn" class="btn-secondary">ZOOM: 1.0x</button>
+        <input type="range" id="angleSlider" min="-180" max="180" value="42" aria-label="Rotate 360 degrees" />
+        <button id="resetCamBtn" class="btn-secondary">RESET VIEW</button>
         <button id="autoSpinBtn" class="btn-secondary">AUTO-ORBIT: ON</button>
       </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>

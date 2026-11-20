@@ -1,6 +1,11 @@
 /* ==========================================================================
    PORSCHE 911 GT3 RS — INTERACTIVE TELEMETRY, 3D INSPECTOR, AUDIO & STATE ENGINE
    ========================================================================== */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   /* ------------------------------------------------------------------------
@@ -8,10 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
      ------------------------------------------------------------------------ */
   const STORAGE_KEY = 'porsche_992_gt3rs_build_v1';
 
+  const hueRotationMap = {
+    'Acid Green': '0deg',
+    'Shark Blue': '92deg',
+    'Lava Orange': '-88deg',
+    'Racing Yellow': '-55deg'
+  };
+
   const defaultBuild = {
     color: 'Acid Green',
     hex: '#39FF14',
     glow: 'rgba(57, 255, 20, 0.35)',
+    hue: '0deg',
     img: 'assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif',
     wheel: '20"/21" SATIN BLACK FORGED MAGNESIUM',
     wheelColor: '#2B3036',
@@ -22,7 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && saved.color && saved.img) {
-      activeBuild = { ...defaultBuild, ...saved };
+      activeBuild = {
+        ...defaultBuild,
+        ...saved,
+        hue: saved.hue || hueRotationMap[saved.color] || '0deg'
+      };
     }
   } catch (e) {
     console.warn('localStorage unavailable, using default build.');
@@ -31,25 +48,105 @@ document.addEventListener('DOMContentLoaded', () => {
   const rootEl = document.documentElement;
   const heroCarImg = document.getElementById('heroCarImg');
   const studioCarImg = document.getElementById('studioCarImg');
-  const modal360Img = document.getElementById('modal360Img');
   const activePaintBadge = document.getElementById('activePaintBadge');
   const studioColorName = document.getElementById('studioColorName');
   const studioWheelName = document.getElementById('studioWheelName');
   const wheelFinishBadge = document.getElementById('wheelFinishBadge');
   const saveStatus = document.getElementById('saveStatus');
+  const exhaustCanvas = document.getElementById('exhaustCanvas');
+  const canvasCtx = exhaustCanvas ? exhaustCanvas.getContext('2d') : null;
+
+  let scene, camera, renderer, controls, carGroup, turntableRing, bodyPaintMat, wheelRimMat, rimLight;
+  let gltfPaintMaterials = [];
+  let gltfRimMaterials = [];
+  let wheelsList = [];
+  let autoSpin = true;
+  let threeInitialized = false;
+  let wavePhase = 0;
+
+  // Map neon UI swatch colors to deep, rich automotive factory clearcoat tones
+  const deepAutomotivePaintMap = {
+    '#39FF14': '#188C08', // Deep Porsche Acid / Lizard Green
+    '#00B4FF': '#00569E', // Deep Porsche Shark Blue
+    '#FF5500': '#B82900', // Deep Porsche Lava Orange
+    '#FFD000': '#C48F00'  // Deep Porsche Racing Yellow
+  };
+
+  function getDeepCarPaintColor(hex) {
+    const upper = (hex || '').toUpperCase();
+    if (deepAutomotivePaintMap[upper]) {
+      return new THREE.Color(deepAutomotivePaintMap[upper]);
+    }
+    const c = new THREE.Color(hex);
+    const hsl = {};
+    c.getHSL(hsl);
+    c.setHSL(hsl.h, Math.min(1, hsl.s * 1.1), hsl.l * 0.58);
+    return c;
+  }
+
+  function drawIdleBaseline(overrideHex) {
+    if (!exhaustCanvas || !canvasCtx) return;
+    const w = exhaustCanvas.width;
+    const h = exhaustCanvas.height;
+    canvasCtx.clearRect(0, 0, w, h);
+    canvasCtx.strokeStyle = overrideHex || activeBuild.hex || '#39FF14';
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = h / 2 + Math.sin(x * 0.05) * 2.2 * Math.sin((x / w) * Math.PI);
+      if (x === 0) canvasCtx.moveTo(x, y);
+      else canvasCtx.lineTo(x, y);
+    }
+    canvasCtx.stroke();
+  }
+
+  function update3DCarPaint(hex, wheelHex) {
+    const deepPaint = getDeepCarPaintColor(hex);
+
+    // 1. Update procedural fallback mesh (if active)
+    if (bodyPaintMat) bodyPaintMat.color.copy(deepPaint);
+    if (wheelRimMat && wheelHex) wheelRimMat.color.set(wheelHex);
+
+    // 2. Keep showroom turntable ring & subtle rim light matched to UI accent
+    if (turntableRing) turntableRing.material.color.set(hex);
+    if (rimLight) rimLight.color.set(hex);
+
+    // 3. Update loaded .glb car body paint materials with deep clearcoat finish
+    gltfPaintMaterials.forEach((mat) => {
+      mat.color.copy(deepPaint);
+      if ('metalness' in mat) mat.metalness = Math.max(mat.metalness ?? 0.4, 0.45);
+      if ('roughness' in mat) mat.roughness = Math.min(mat.roughness ?? 0.25, 0.22);
+      if ('clearcoat' in mat) {
+        mat.clearcoat = 1.0;
+        mat.clearcoatRoughness = 0.06;
+      }
+      mat.needsUpdate = true;
+    });
+
+    // 4. Update loaded .glb wheel rim materials (if matched)
+    if (wheelHex && gltfRimMaterials.length > 0) {
+      gltfRimMaterials.forEach((mat) => {
+        mat.color.set(wheelHex);
+        mat.needsUpdate = true;
+      });
+    }
+  }
 
   function applyBuildToDOM(build) {
+    const resolvedHue = build.hue || hueRotationMap[build.color] || '0deg';
     rootEl.style.setProperty('--accent-color', build.hex);
     rootEl.style.setProperty('--accent-glow', build.glow);
+    rootEl.style.setProperty('--bg-hue', resolvedHue);
     rootEl.style.setProperty('--wheel-accent', build.wheelColor || '#2B3036');
 
-    heroCarImg.src = build.img;
-    studioCarImg.src = build.img;
-    modal360Img.src = build.img;
+    if (heroCarImg) heroCarImg.src = build.img;
+    if (studioCarImg) studioCarImg.src = build.img;
+    update3DCarPaint(build.hex, build.wheelColor);
+    drawIdleBaseline(build.hex);
 
-    activePaintBadge.textContent = build.color.toUpperCase();
-    studioColorName.textContent = `${build.color.toUpperCase()} // WEISSACH SPEC`;
-    studioWheelName.textContent = build.wheel;
+    if (activePaintBadge) activePaintBadge.textContent = build.color.toUpperCase();
+    if (studioColorName) studioColorName.textContent = `${build.color.toUpperCase()} // WEISSACH SPEC`;
+    if (studioWheelName) studioWheelName.textContent = build.wheel;
     if (wheelFinishBadge) {
       wheelFinishBadge.innerHTML = `<i class="wheel-dot-live"></i> ${build.wheelTag || 'MAGNESIUM SPEC'}`;
     }
@@ -64,10 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
-      saveStatus.textContent = 'SAVED TO LOCALSTORAGE ✓';
-      setTimeout(() => {
-        saveStatus.textContent = 'SYNCED TO LOCALSTORAGE';
-      }, 1500);
+      if (saveStatus) {
+        saveStatus.textContent = 'SAVED TO LOCALSTORAGE ✓';
+        setTimeout(() => {
+          saveStatus.textContent = 'SYNCED TO LOCALSTORAGE';
+        }, 1500);
+      }
     } catch (e) {
       // Ignore storage quota errors
     }
@@ -80,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeBuild.color = btn.dataset.color;
       activeBuild.hex = btn.dataset.hex;
       activeBuild.glow = btn.dataset.glow;
+      activeBuild.hue = btn.dataset.hue || hueRotationMap[btn.dataset.color] || '0deg';
       activeBuild.img = btn.dataset.img;
       applyBuildToDOM(activeBuild);
     });
@@ -150,146 +250,464 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     4. INTERACTIVE 360° STUDIO INSPECTOR MODAL (MULTI-FRAME + ZOOM + KEYS)
+     4. INTERACTIVE 360° WEBGL 3D INSPECTION MODAL (PUBG SHOWROOM ENGINE)
      ------------------------------------------------------------------------ */
   const modal360 = document.getElementById('modal360');
   const open360Btn = document.getElementById('open360Btn');
   const card360Trigger = document.getElementById('card360Trigger');
   const close360Btn = document.getElementById('close360Btn');
   const stage360Viewport = document.getElementById('stage360Viewport');
-  const car360Object = document.getElementById('car360Object');
+  const car3dCanvas = document.getElementById('car3dCanvas');
   const angleSlider = document.getElementById('angleSlider');
   const yawReadout = document.getElementById('yawReadout');
-  const frameLabelReadout = document.getElementById('frameLabelReadout');
   const autoSpinBtn = document.getElementById('autoSpinBtn');
-  const zoomInspectBtn = document.getElementById('zoomInspectBtn');
+  const resetCamBtn = document.getElementById('resetCamBtn');
+  const modelSourceBadge = document.getElementById('modelSourceBadge');
+  const modelLoaderOverlay = document.getElementById('modelLoaderOverlay');
+  const loaderProgress = document.getElementById('loaderProgress');
 
-  const studioAngleFrames = [
-    { label: 'ACTIVE BUILD LIVERY', getImg: () => activeBuild.img },
-    { label: 'SHARK BLUE AERO PROFILE', getImg: () => 'assests/images/CAR_IMG_BLUE.jfif' },
-    { label: 'LAVA ORANGE TRACK SPEC', getImg: () => 'assests/images/CAR_IMG_ORANGE.jfif' },
-    { label: 'RACING YELLOW WEISSACH', getImg: () => 'assests/images/CAR_IMG_YELLOW.jfif' }
-  ];
+  function buildProceduralGT3RS(paintHex, wheelHex) {
+    const group = new THREE.Group();
 
-  let currentAngle = 0; // 0 to 359
-  let isDragging360 = false;
-  let startX360 = 0;
-  let autoSpin = true;
-  let zoomLevel = 1;
-  let spinRaf = null;
-  let lastFrameIdx = -1;
+    bodyPaintMat = new THREE.MeshPhysicalMaterial({
+      color: getDeepCarPaintColor(paintHex),
+      metalness: 0.55,
+      roughness: 0.18,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08
+    });
 
-  function updateInspectorView(deg) {
-    currentAngle = ((deg % 360) + 360) % 360;
-    const rounded = Math.round(currentAngle);
+    const carbonMat = new THREE.MeshStandardMaterial({
+      color: 0x14171a,
+      metalness: 0.35,
+      roughness: 0.42
+    });
 
-    // Subtle bounded 3D perspective tilt (-18deg to +18deg) so the image never flips backward
-    const boundedTiltY = Math.sin((currentAngle * Math.PI) / 180) * 18;
-    const boundedTiltX = Math.cos((currentAngle * Math.PI) / 180) * 4;
-    car360Object.style.transform = `scale(${zoomLevel}) rotateY(${boundedTiltY.toFixed(2)}deg) rotateX(${boundedTiltX.toFixed(2)}deg)`;
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x090c10,
+      metalness: 0.1,
+      roughness: 0.05,
+      transmission: 0.55,
+      transparent: true,
+      opacity: 0.88
+    });
 
-    // Scrub across the 4 gallery angles smoothly every 90 degrees
-    const frameIdx = Math.floor(currentAngle / 90) % studioAngleFrames.length;
-    if (frameIdx !== lastFrameIdx) {
-      lastFrameIdx = frameIdx;
-      modal360Img.src = studioAngleFrames[frameIdx].getImg();
-      if (frameLabelReadout) {
-        frameLabelReadout.textContent = studioAngleFrames[frameIdx].label;
-      }
-    }
+    wheelRimMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(wheelHex || '#2B3036'),
+      metalness: 0.82,
+      roughness: 0.24
+    });
 
-    angleSlider.value = rounded;
-    yawReadout.textContent = `${rounded}°`;
+    const tireMat = new THREE.MeshStandardMaterial({
+      color: 0x0d0e10,
+      roughness: 0.85
+    });
+
+    // Lower Widebody Chassis
+    const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.46, 4.45), bodyPaintMat);
+    lowerBody.position.y = 0.52;
+    group.add(lowerBody);
+
+    // Sculpted Front Hood & Fenders
+    const frontHood = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.22, 1.45), bodyPaintMat);
+    frontHood.position.set(0, 0.72, 1.42);
+    frontHood.rotation.x = 0.14;
+    group.add(frontHood);
+
+    // Carbon Nostrils / S-Duct Vent
+    const hoodVent = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 0.55), carbonMat);
+    hoodVent.position.set(0, 0.82, 1.35);
+    hoodVent.rotation.x = 0.14;
+    group.add(hoodVent);
+
+    // Teardrop 911 Cabin
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.48, 2.05), glassMat);
+    cabin.position.set(0, 0.98, -0.15);
+    group.add(cabin);
+
+    const roofPanel = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.06, 1.35), carbonMat);
+    roofPanel.position.set(0, 1.23, -0.2);
+    group.add(roofPanel);
+
+    // Front Carbon Splitter & Canards
+    const splitter = new THREE.Mesh(new THREE.BoxGeometry(2.04, 0.06, 0.55), carbonMat);
+    splitter.position.set(0, 0.27, 2.15);
+    group.add(splitter);
+
+    // Rear Diffuser & Twin Center Exhausts
+    const diffuser = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.24, 0.45), carbonMat);
+    diffuser.position.set(0, 0.34, -2.18);
+    group.add(diffuser);
+
+    const pipeMat = new THREE.MeshStandardMaterial({ color: 0xb8c2cc, metalness: 0.95, roughness: 0.15 });
+    [-0.14, 0.14].forEach((xPos) => {
+      const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.22, 16), pipeMat);
+      pipe.rotation.x = Math.PI / 2;
+      pipe.position.set(xPos, 0.32, -2.36);
+      group.add(pipe);
+    });
+
+    // Signature Swan-Neck Rear Wing & DRS Flap
+    [-0.58, 0.58].forEach((xPos) => {
+      const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.56, 0.26), carbonMat);
+      pylon.position.set(xPos, 1.08, -1.95);
+      pylon.rotation.x = -0.18;
+      group.add(pylon);
+    });
+
+    const mainWing = new THREE.Mesh(new THREE.BoxGeometry(1.98, 0.06, 0.42), carbonMat);
+    mainWing.position.set(0, 1.34, -2.06);
+    mainWing.rotation.x = 0.08;
+    group.add(mainWing);
+
+    [-0.99, 0.99].forEach((xPos) => {
+      const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.34, 0.54), bodyPaintMat);
+      endplate.position.set(xPos, 1.34, -2.06);
+      group.add(endplate);
+    });
+
+    // LED Matrix Headlights & Full-Width Rear Lightbar
+    const headLightMat = new THREE.MeshBasicMaterial({ color: 0xeafff5 });
+    [-0.68, 0.68].forEach((xPos) => {
+      const hl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), headLightMat);
+      hl.scale.set(1.1, 0.65, 1.4);
+      hl.position.set(xPos, 0.68, 2.15);
+      group.add(hl);
+    });
+
+    const tailBar = new THREE.Mesh(
+      new THREE.BoxGeometry(1.76, 0.06, 0.08),
+      new THREE.MeshBasicMaterial({ color: 0xff1e27 })
+    );
+    tailBar.position.set(0, 0.72, -2.23);
+    group.add(tailBar);
+
+    // 4 Forged Center-Lock Wheels + Brake Calipers
+    const wheelCoords = [
+      [-0.94, 0.38, 1.38],
+      [0.94, 0.38, 1.38],
+      [-0.98, 0.41, -1.36],
+      [0.98, 0.41, -1.36]
+    ];
+
+    wheelsList = [];
+    wheelCoords.forEach(([x, y, z], idx) => {
+      const radius = idx >= 2 ? 0.41 : 0.38;
+      const wheelUnit = new THREE.Group();
+
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.32, 28), tireMat);
+      tire.rotation.z = Math.PI / 2;
+      wheelUnit.add(tire);
+
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.72, radius * 0.72, 0.33, 20), wheelRimMat);
+      rim.rotation.z = Math.PI / 2;
+      wheelUnit.add(rim);
+
+      const caliper = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.18, 0.14),
+        new THREE.MeshStandardMaterial({ color: 0xffd000, metalness: 0.5, roughness: 0.3 })
+      );
+      caliper.position.set(x > 0 ? -0.08 : 0.08, 0.06, 0.1);
+      wheelUnit.add(caliper);
+
+      wheelUnit.position.set(x, y, z);
+      group.add(wheelUnit);
+      wheelsList.push(wheelUnit);
+    });
+
+    return group;
   }
 
-  function animate360Loop() {
-    if (!modal360.classList.contains('open')) {
-      spinRaf = null;
-      return;
+  function initThreeShowroom() {
+    if (threeInitialized) return;
+    threeInitialized = true;
+
+    scene = new THREE.Scene();
+
+    const width = stage360Viewport.clientWidth || 900;
+    const height = stage360Viewport.clientHeight || 460;
+
+    camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(3.8, 1.85, 4.3);
+
+    renderer = new THREE.WebGLRenderer({ canvas: car3dCanvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.92;
+
+    // Realistic PBR Studio Environment Reflections (balanced so paint stays rich & deep)
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.55;
+
+    // Studio Showroom Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080a0c, 0.65);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
+    keyLight.position.set(5, 8, 6);
+    scene.add(keyLight);
+
+    rimLight = new THREE.DirectionalLight(new THREE.Color(activeBuild.hex), 1.1);
+    rimLight.position.set(-6, 4, -5);
+    scene.add(rimLight);
+
+    // PUBG Showroom Reflective Floor & Glowing Turntable Ring
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(4.2, 64),
+      new THREE.MeshStandardMaterial({ color: 0x0c0f12, metalness: 0.7, roughness: 0.25 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    turntableRing = new THREE.Mesh(
+      new THREE.RingGeometry(2.65, 2.74, 64),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(activeBuild.hex), side: THREE.DoubleSide })
+    );
+    turntableRing.rotation.x = -Math.PI / 2;
+    turntableRing.position.y = 0.005;
+    scene.add(turntableRing);
+
+    // Show sleek loading overlay while turntable remains empty until .glb loads
+    if (modelLoaderOverlay) modelLoaderOverlay.classList.remove('hidden');
+    if (modelSourceBadge) modelSourceBadge.textContent = 'LOADING 3D CHASSIS...';
+
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    // Load Real .glb Model from assests/models/porsche_911_gt3_rs_992.glb
+    gltfLoader.load(
+      'assests/models/porsche_911_gt3_rs_992.glb',
+      (gltf) => {
+        if (carGroup) scene.remove(carGroup);
+        carGroup = gltf.scene;
+
+        // Auto-scale & center model on the turntable
+        const box = new THREE.Box3().setFromObject(carGroup);
+        const size = box.getSize(new THREE.Vector3());
+        const scale = 4.4 / Math.max(size.x, size.y, size.z);
+        carGroup.scale.setScalar(scale);
+        box.setFromObject(carGroup);
+        const center = box.getCenter(new THREE.Vector3());
+        carGroup.position.set(-center.x, -box.min.y, -center.z);
+
+        // Scan and bind body-paint & wheel-rim materials for live color switching
+        gltfPaintMaterials = [];
+        gltfRimMaterials = [];
+        const matchedPaintSet = new Set();
+        const matchedRimSet = new Set();
+
+        const paintKeywords = /paint|body|carpaint|chassis|hood|bonnet|door|fender|wing|spoiler|bumper|shell|coat|exterior|livery/i;
+        const excludeKeywords = /glass|window|windshield|tire|tyre|rubber|brake|caliper|disc|rotor|light|headlight|taillight|lamp|interior|seat|dash|steering|carbon|grille|grill|mesh|exhaust|pipe|chrome|mirror|badge|logo|emblem|plate|shadow|floor/i;
+        const rimKeywords = /rim|wheel|alloy|magnesium|spoke/i;
+
+        carGroup.traverse((child) => {
+          if (!child.isMesh || !child.material) return;
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+          materials.forEach((mat) => {
+            const combinedName = `${child.name} ${mat.name}`;
+
+            if (rimKeywords.test(combinedName) && !/tire|tyre|rubber/i.test(combinedName)) {
+              if (!matchedRimSet.has(mat)) {
+                matchedRimSet.add(mat);
+                gltfRimMaterials.push(mat);
+              }
+              return;
+            }
+
+            if (excludeKeywords.test(combinedName)) return;
+
+            if (paintKeywords.test(combinedName) && !matchedPaintSet.has(mat)) {
+              matchedPaintSet.add(mat);
+              gltfPaintMaterials.push(mat);
+            }
+          });
+        });
+
+        // Fallback: If model uses generic names (e.g., Material.001), pick the largest non-excluded mesh
+        if (gltfPaintMaterials.length === 0) {
+          let largestMesh = null;
+          let maxVolume = 0;
+
+          carGroup.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const combinedName = `${child.name} ${child.material.name || ''}`;
+            if (excludeKeywords.test(combinedName) || rimKeywords.test(combinedName)) return;
+
+            child.geometry.computeBoundingBox();
+            const bSize = new THREE.Vector3();
+            child.geometry.boundingBox.getSize(bSize);
+            const vol = bSize.x * bSize.y * bSize.z;
+
+            if (vol > maxVolume) {
+              maxVolume = vol;
+              largestMesh = child;
+            }
+          });
+
+          if (largestMesh) {
+            const mats = Array.isArray(largestMesh.material) ? largestMesh.material : [largestMesh.material];
+            mats.forEach((m) => gltfPaintMaterials.push(m));
+          }
+        }
+
+        scene.add(carGroup);
+        update3DCarPaint(activeBuild.hex, activeBuild.wheelColor);
+        if (modelSourceBadge) modelSourceBadge.textContent = '3D GLTF MODEL • 360° ORBIT';
+        if (modelLoaderOverlay) modelLoaderOverlay.classList.add('hidden');
+      },
+      (xhr) => {
+        if (xhr.total && loaderProgress) {
+          const pct = Math.min(100, Math.round((xhr.loaded / xhr.total) * 100));
+          loaderProgress.textContent = `${pct}%`;
+        }
+      },
+      (error) => {
+        console.warn('GLB failed to load, building procedural fallback:', error);
+        carGroup = buildProceduralGT3RS(activeBuild.hex, activeBuild.wheelColor);
+        scene.add(carGroup);
+        if (modelSourceBadge) modelSourceBadge.textContent = 'WEBGL 3D CHASSIS • 360° ORBIT';
+        if (modelLoaderOverlay) modelLoaderOverlay.classList.add('hidden');
+      }
+    );
+
+    // OrbitControls (360° Drag + Zoom + Damping)
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(0, 0.72, 0);
+    controls.minDistance = 2.4;
+    controls.maxDistance = 8.5;
+    controls.maxPolarAngle = Math.PI / 2 - 0.04;
+    controls.autoRotate = autoSpin;
+    controls.autoRotateSpeed = 1.6;
+
+    controls.addEventListener('start', () => {
+      autoSpin = false;
+      controls.autoRotate = false;
+      if (autoSpinBtn) autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
+    });
+
+    window.addEventListener('resize', () => {
+      if (!modal360.classList.contains('open')) return;
+      const w = stage360Viewport.clientWidth;
+      const h = stage360Viewport.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    function animateShowroom() {
+      requestAnimationFrame(animateShowroom);
+      if (!modal360.classList.contains('open')) return;
+
+      controls.update();
+
+      const azDeg = Math.round(THREE.MathUtils.radToDeg(controls.getAzimuthalAngle()));
+      if (yawReadout) yawReadout.textContent = `${azDeg}°`;
+      if (angleSlider) angleSlider.value = azDeg;
+
+      renderer.render(scene, camera);
     }
-    if (autoSpin && !isDragging360) {
-      updateInspectorView(currentAngle + 0.45);
-    }
-    spinRaf = requestAnimationFrame(animate360Loop);
+    animateShowroom();
+  }
+
+  function setCameraPreset(preset) {
+    if (!camera || !controls) return;
+    autoSpin = false;
+    controls.autoRotate = false;
+    if (autoSpinBtn) autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
+
+    const positions = {
+      hero: [3.8, 1.85, 4.3],
+      front: [0.0, 1.25, 5.2],
+      side: [5.4, 1.25, 0.0],
+      rear: [-2.6, 1.95, -4.4]
+    };
+    const pos = positions[preset] || positions.hero;
+    camera.position.set(...pos);
+    controls.target.set(0, 0.72, 0);
+    controls.update();
   }
 
   function open360Modal() {
-    lastFrameIdx = -1;
+    if (!modal360) return;
     modal360.classList.add('open');
     modal360.setAttribute('aria-hidden', 'false');
-    updateInspectorView(currentAngle);
-    if (!spinRaf) {
-      spinRaf = requestAnimationFrame(animate360Loop);
-    }
+    initThreeShowroom();
+    const w = stage360Viewport.clientWidth;
+    const h = stage360Viewport.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    update3DCarPaint(activeBuild.hex, activeBuild.wheelColor);
   }
 
   function close360Modal() {
+    if (!modal360) return;
     modal360.classList.remove('open');
     modal360.setAttribute('aria-hidden', 'true');
-    if (spinRaf) {
-      cancelAnimationFrame(spinRaf);
-      spinRaf = null;
-    }
   }
 
-  open360Btn.addEventListener('click', open360Modal);
-  card360Trigger.addEventListener('click', open360Modal);
-  close360Btn.addEventListener('click', close360Modal);
+  if (open360Btn) open360Btn.addEventListener('click', open360Modal);
+  if (card360Trigger) card360Trigger.addEventListener('click', open360Modal);
+  if (close360Btn) close360Btn.addEventListener('click', close360Modal);
 
-  modal360.addEventListener('click', (e) => {
-    if (e.target === modal360) close360Modal();
-  });
-
-  angleSlider.addEventListener('input', (e) => {
-    autoSpin = false;
-    autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
-    updateInspectorView(parseFloat(e.target.value));
-  });
-
-  autoSpinBtn.addEventListener('click', () => {
-    autoSpin = !autoSpin;
-    autoSpinBtn.textContent = `AUTO-ORBIT: ${autoSpin ? 'ON' : 'OFF'}`;
-  });
-
-  if (zoomInspectBtn) {
-    zoomInspectBtn.addEventListener('click', () => {
-      zoomLevel = zoomLevel === 1 ? 1.32 : 1;
-      zoomInspectBtn.textContent = `ZOOM: ${zoomLevel.toFixed(1)}x`;
-      updateInspectorView(currentAngle);
+  if (modal360) {
+    modal360.addEventListener('click', (e) => {
+      if (e.target === modal360) close360Modal();
     });
   }
 
-  stage360Viewport.addEventListener('pointerdown', (e) => {
-    isDragging360 = true;
-    autoSpin = false;
-    autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
-    startX360 = e.clientX;
-  });
-
-  window.addEventListener('pointermove', (e) => {
-    if (!isDragging360) return;
-    const deltaX = e.clientX - startX360;
-    startX360 = e.clientX;
-    updateInspectorView(currentAngle + deltaX * 0.65);
-  });
-
-  window.addEventListener('pointerup', () => {
-    isDragging360 = false;
-  });
-
   window.addEventListener('keydown', (e) => {
-    if (!modal360.classList.contains('open')) return;
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && modal360 && modal360.classList.contains('open')) {
       close360Modal();
-    } else if (e.key === 'ArrowRight') {
-      autoSpin = false;
-      autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
-      updateInspectorView(currentAngle + 15);
-    } else if (e.key === 'ArrowLeft') {
-      autoSpin = false;
-      autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
-      updateInspectorView(currentAngle - 15);
     }
+  });
+
+  if (angleSlider) {
+    angleSlider.addEventListener('input', (e) => {
+      if (!camera || !controls) return;
+      autoSpin = false;
+      controls.autoRotate = false;
+      if (autoSpinBtn) autoSpinBtn.textContent = 'AUTO-ORBIT: OFF';
+
+      const rad = THREE.MathUtils.degToRad(parseFloat(e.target.value));
+      const radius = Math.hypot(camera.position.x, camera.position.z);
+      camera.position.x = Math.sin(rad) * radius;
+      camera.position.z = Math.cos(rad) * radius;
+      controls.update();
+    });
+  }
+
+  if (autoSpinBtn) {
+    autoSpinBtn.addEventListener('click', () => {
+      autoSpin = !autoSpin;
+      if (controls) controls.autoRotate = autoSpin;
+      autoSpinBtn.textContent = `AUTO-ORBIT: ${autoSpin ? 'ON' : 'OFF'}`;
+    });
+  }
+
+  if (resetCamBtn) {
+    resetCamBtn.addEventListener('click', () => {
+      document.querySelectorAll('.cam-preset-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.cam === 'hero');
+      });
+      setCameraPreset('hero');
+    });
+  }
+
+  document.querySelectorAll('.cam-preset-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cam-preset-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      setCameraPreset(btn.dataset.cam);
+    });
   });
 
   /* ------------------------------------------------------------------------
@@ -334,11 +752,11 @@ document.addEventListener('DOMContentLoaded', () => {
     aeroPins.forEach((p) => p.classList.remove('active'));
     pin.classList.add('active');
 
-    aeroCode.textContent = info.code;
-    aeroTitle.textContent = info.title;
-    aeroDescription.textContent = info.desc;
-    aeroDownforceVal.textContent = info.load200;
-    aeroTotalVal.textContent = info.load285;
+    if (aeroCode) aeroCode.textContent = info.code;
+    if (aeroTitle) aeroTitle.textContent = info.title;
+    if (aeroDescription) aeroDescription.textContent = info.desc;
+    if (aeroDownforceVal) aeroDownforceVal.textContent = info.load200;
+    if (aeroTotalVal) aeroTotalVal.textContent = info.load285;
   }
 
   aeroPins.forEach((pin) => {
@@ -355,12 +773,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const airflowLines = document.getElementById('airflowLines');
   let airflowVisible = true;
 
-  toggleAirflowBtn.addEventListener('click', () => {
-    airflowVisible = !airflowVisible;
-    airflowLines.classList.toggle('hidden', !airflowVisible);
-    toggleAirflowBtn.classList.toggle('active', airflowVisible);
-    toggleAirflowBtn.textContent = `AIRFLOW VECTORS: ${airflowVisible ? 'ON' : 'OFF'}`;
-  });
+  if (toggleAirflowBtn && airflowLines) {
+    toggleAirflowBtn.addEventListener('click', () => {
+      airflowVisible = !airflowVisible;
+      airflowLines.classList.toggle('hidden', !airflowVisible);
+      toggleAirflowBtn.classList.toggle('active', airflowVisible);
+      toggleAirflowBtn.textContent = `AIRFLOW VECTORS: ${airflowVisible ? 'ON' : 'OFF'}`;
+    });
+  }
 
   /* ------------------------------------------------------------------------
      6. WEB AUDIO API: AMBIENT THEME MUSIC + 9,000 RPM FLAT-6 EXHAUST REV
@@ -376,8 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeAudioLabel = document.getElementById('themeAudioLabel');
   const heroRevBtn = document.getElementById('heroRevBtn');
   const studioRevBtn = document.getElementById('studioRevBtn');
-  const exhaustCanvas = document.getElementById('exhaustCanvas');
-  const canvasCtx = exhaustCanvas.getContext('2d');
 
   function ensureAudioContext() {
     if (!audioCtx) {
@@ -425,9 +843,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       themeNodes = [masterGain, filter, ...oscs];
       themePlaying = true;
-      themeAudioBtn.classList.add('playing');
-      themeAudioBtn.setAttribute('aria-pressed', 'true');
-      themeAudioLabel.textContent = 'THEME: ON';
+      if (themeAudioBtn) {
+        themeAudioBtn.classList.add('playing');
+        themeAudioBtn.setAttribute('aria-pressed', 'true');
+      }
+      if (themeAudioLabel) themeAudioLabel.textContent = 'THEME: ON';
     } else {
       themeNodes.forEach((node) => {
         if (typeof node.stop === 'function') {
@@ -439,33 +859,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       themeNodes = [];
       themePlaying = false;
-      themeAudioBtn.classList.remove('playing');
-      themeAudioBtn.setAttribute('aria-pressed', 'false');
-      themeAudioLabel.textContent = 'THEME: OFF';
+      if (themeAudioBtn) {
+        themeAudioBtn.classList.remove('playing');
+        themeAudioBtn.setAttribute('aria-pressed', 'false');
+      }
+      if (themeAudioLabel) themeAudioLabel.textContent = 'THEME: OFF';
     }
   }
 
-  themeAudioBtn.addEventListener('click', toggleThemeMusic);
-
-  // Canvas Waveform Visualizer (Active during rev, static idle baseline otherwise)
-  let wavePhase = 0;
-  function drawIdleBaseline() {
-    const w = exhaustCanvas.width;
-    const h = exhaustCanvas.height;
-    canvasCtx.clearRect(0, 0, w, h);
-    const accent = getComputedStyle(rootEl).getPropertyValue('--accent-color').trim() || '#39FF14';
-    canvasCtx.strokeStyle = accent;
-    canvasCtx.lineWidth = 2;
-    canvasCtx.beginPath();
-    for (let x = 0; x < w; x++) {
-      const y = h / 2 + Math.sin(x * 0.05) * 2.2 * Math.sin((x / w) * Math.PI);
-      if (x === 0) canvasCtx.moveTo(x, y);
-      else canvasCtx.lineTo(x, y);
-    }
-    canvasCtx.stroke();
-  }
+  if (themeAudioBtn) themeAudioBtn.addEventListener('click', toggleThemeMusic);
 
   function renderWaveform() {
+    if (!exhaustCanvas || !canvasCtx) return;
     if (!isRevving) {
       drawIdleBaseline();
       waveRaf = null;
@@ -476,8 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const h = exhaustCanvas.height;
     canvasCtx.clearRect(0, 0, w, h);
 
-    const accent = getComputedStyle(rootEl).getPropertyValue('--accent-color').trim() || '#39FF14';
-    canvasCtx.strokeStyle = accent;
+    canvasCtx.strokeStyle = activeBuild.hex || '#39FF14';
     canvasCtx.lineWidth = 2;
     canvasCtx.beginPath();
 
@@ -525,7 +929,6 @@ document.addEventListener('DOMContentLoaded', () => {
     bandpass.connect(masterGain);
     masterGain.connect(audioCtx.destination);
 
-    // Firing harmonics + sub-bass boxer rumble
     const harmonics = [
       { mult: 0.5, type: 'triangle' },
       { mult: 1, type: 'sawtooth' },
@@ -551,8 +954,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, duration * 1000);
   }
 
-  heroRevBtn.addEventListener('click', triggerFlatSixRev);
-  studioRevBtn.addEventListener('click', triggerFlatSixRev);
+  if (heroRevBtn) heroRevBtn.addEventListener('click', triggerFlatSixRev);
+  if (studioRevBtn) studioRevBtn.addEventListener('click', triggerFlatSixRev);
 
   /* ------------------------------------------------------------------------
      7. SPECIFICATIONS TABS, WEISSACH PACKAGE TOGGLE & SCROLL COUNTERS
@@ -571,7 +974,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
-      document.getElementById(`tab-${target}`).classList.add('active');
+      const panel = document.getElementById(`tab-${target}`);
+      if (panel) panel.classList.add('active');
     });
   });
 
@@ -587,18 +991,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetWeight = weissachEnabled ? '1435' : '1450';
       weissachToggleBtn.classList.toggle('active', weissachEnabled);
       weissachToggleBtn.setAttribute('aria-pressed', String(weissachEnabled));
-      weissachLabel.textContent = weissachEnabled
-        ? 'WEISSACH PACKAGE: ON (1,435 KG)'
-        : 'WEISSACH PACKAGE: OFF (1,450 KG)';
-      kerbWeightCounter.dataset.target = targetWeight;
-      kerbWeightCounter.textContent = targetWeight;
-      kerbWeightLabel.textContent = weissachEnabled
-        ? 'DIN KERB WEIGHT (WEISSACH)'
-        : 'DIN KERB WEIGHT (STANDARD)';
+      if (weissachLabel) {
+        weissachLabel.textContent = weissachEnabled
+          ? 'WEISSACH PACKAGE: ON (1,435 KG)'
+          : 'WEISSACH PACKAGE: OFF (1,450 KG)';
+      }
+      if (kerbWeightCounter) {
+        kerbWeightCounter.dataset.target = targetWeight;
+        kerbWeightCounter.textContent = targetWeight;
+      }
+      if (kerbWeightLabel) {
+        kerbWeightLabel.textContent = weissachEnabled
+          ? 'DIN KERB WEIGHT (WEISSACH)'
+          : 'DIN KERB WEIGHT (STANDARD)';
+      }
     });
   }
 
-  // Animated Counters on Scroll
   let countersStarted = false;
   const countersBanner = document.getElementById('countersBanner');
   const countEls = document.querySelectorAll('.count-up');
@@ -666,16 +1075,17 @@ document.addEventListener('DOMContentLoaded', () => {
       starBtns.forEach((s) => {
         s.classList.toggle('active', parseInt(s.dataset.star, 10) <= selectedStars);
       });
-      ratingLabel.textContent = ratingDescriptions[selectedStars];
+      if (ratingLabel) ratingLabel.textContent = ratingDescriptions[selectedStars];
     });
   });
 
   function renderReviews() {
+    if (!reviewsFeed) return;
     let reviews = [
       {
         name: 'Weissach Test Driver',
         stars: 5,
-        text: 'The active DRS aero overlay and 9,000 RPM exhaust synthesizer capture the pure motorsport soul of the 992 GT3 RS.'
+        text: 'The active DRS aero overlay and 9,000 RPM exhaust synthesizer capture the pure motorsport soul of the 911 GT3 RS.'
       }
     ];
     try {
@@ -711,30 +1121,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }[m]));
   }
 
-  reviewForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById('reviewerName');
-    const msgInput = document.getElementById('reviewMessage');
+  if (reviewForm) {
+    reviewForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('reviewerName');
+      const msgInput = document.getElementById('reviewMessage');
 
-    let existing = [];
-    try {
-      existing = JSON.parse(localStorage.getItem(REVIEWS_KEY)) || [];
-    } catch (err) {}
+      let existing = [];
+      try {
+        existing = JSON.parse(localStorage.getItem(REVIEWS_KEY)) || [];
+      } catch (err) {}
 
-    existing.unshift({
-      name: nameInput.value.trim(),
-      stars: selectedStars,
-      text: msgInput.value.trim()
+      existing.unshift({
+        name: nameInput.value.trim(),
+        stars: selectedStars,
+        text: msgInput.value.trim()
+      });
+
+      try {
+        localStorage.setItem(REVIEWS_KEY, JSON.stringify(existing.slice(0, 10)));
+      } catch (err) {}
+
+      nameInput.value = '';
+      msgInput.value = '';
+      renderReviews();
     });
-
-    try {
-      localStorage.setItem(REVIEWS_KEY, JSON.stringify(existing.slice(0, 10)));
-    } catch (err) {}
-
-    nameInput.value = '';
-    msgInput.value = '';
-    renderReviews();
-  });
+  }
 
   renderReviews();
 });

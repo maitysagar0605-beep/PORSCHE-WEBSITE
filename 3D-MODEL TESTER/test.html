@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Porsche 911 GT3 RS (992) - Photographic Cinematic 3D Viewer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0f12;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(13, 15, 18, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 18px 24px;
+      max-width: 330px;
+      z-index: 10;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .hud h1 { 
+      font-size: 1.15rem; 
+      font-weight: 800; 
+      letter-spacing: 0.5px;
+      margin-bottom: 4px; 
+    }
+    .hud p { 
+      font-size: 0.78rem; 
+      color: #8a8f98; 
+      margin-bottom: 14px; 
+      line-height: 1.4;
+    }
+    .file-btn {
+      display: block;
+      text-align: center;
+      background: #e31937;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .file-btn:hover { background: #c4122d; transform: translateY(-1px); }
+    .file-btn:active { transform: translateY(0); }
+    input[type="file"] { display: none; }
+    
+    .swatches-container {
+      margin-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 14px;
+    }
+    .swatches-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8a8f98;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .swatches { display: flex; gap: 8px; align-items: center; }
+    .swatch {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.active { border-color: #fff; transform: scale(1.1); }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="hud">
+    <h1>PORSCHE 911 GT3 RS (992)</h1>
+    <p>High-Fidelity Virtual Cinematic Showroom<br>Drag to Orbit • Zoom to Inspect • Customize paint</p>
+
+    <label class="file-btn" for="glb-input">Replace with High-Poly .GLB File</label>
+    <input type="file" id="glb-input" accept=".glb,.gltf" />
+
+    <div class="swatches-container">
+      <div class="swatches-title">Select Paint Finish</div>
+      <div class="swatches">
+        <div class="swatch active" style="background:#2ebd40" data-color="#2ebd40" title="Python Green"></div>
+        <div class="swatch" style="background:#e31937" data-color="#e31937" title="Guards Red"></div>
+        <div class="swatch" style="background:#f2f4f7" data-color="#f2f4f7" title="Chalk White"></div>
+        <div class="swatch" style="background:#1e3a8a" data-color="#0a2540" title="Gentian Blue"></div>
+        <div class="swatch" style="background:#111" data-color="#111111" title="Carbon Black"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    // SCENE, RENDERER & CINEMATIC POST-PROCESSING
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0c0e11);
+    scene.fog = new THREE.FogExp2(0x0c0e11, 0.015);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Realistic HDRI Mirror Environment Reflections
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(5.5, 1.6, 5.8);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.04;
+    controls.maxPolarAngle = Math.PI / 2 - 0.03; 
+    controls.minDistance = 2.5;
+    controls.maxDistance = 14;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    // HIGH-END SHOWROOM LIGHTING & FLOOR (Match image_1.png dark-studio vibe)
+    const softAmb = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(softAmb);
+
+    const topShed = new THREE.DirectionalLight(0xffffff, 3.5);
+    topShed.position.set(4, 12, 4);
+    topShed.castShadow = true;
+    topShed.shadow.mapSize.set(4096, 4096);
+    topShed.shadow.bias = -0.0002;
+    scene.add(topShed);
+
+    const kickLight = new THREE.DirectionalLight(0x38bdf8, 1.2); // Cool back edge kick
+    kickLight.position.set(-6, 3, -6);
+    scene.add(kickLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffedd5, 1.0); // Warm frontal offset
+    fillLight.position.set(6, 2, 6);
+    scene.add(fillLight);
+
+    // Floor matching picture
+    const floorGeo = new THREE.PlaneGeometry(50, 50);
+    const floorMat = new THREE.MeshStandardMaterial({ 
+      color: 0x090a0d, 
+      roughness: 0.32,
+      metalness: 0.8
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Industrial floor grates (as seen in collage)
+    const gratesGeo = new THREE.BoxGeometry(10, 0.01, 1.2);
+    const gratesMat = new THREE.MeshStandardMaterial({ color: 0x07080a, roughness: 0.8 });
+    const grates1 = new THREE.Mesh(gratesGeo, gratesMat);
+    grates1.position.set(0, 0.001, 1.8);
+    scene.add(grates1);
+
+    const grates2 = grates1.clone();
+    grates2.position.z = -1.8;
+    scene.add(grates2);
+
+    // CAR MATERIALS CONFIG (Paint, Carbon, Glass, Wheels, Lighting)
+    const bodyPaint = new THREE.MeshPhysicalMaterial({
+      color: 0x2ebd40, // Match "Python Green" first
+      metalness: 0.85,
+      roughness: 0.08,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.02,
+      envMapIntensity: 1.5
+    });
+
+    const carbonFiber = new THREE.MeshStandardMaterial({ 
+      color: 0x111215, 
+      roughness: 0.35, 
+      metalness: 0.6 
+    });
+
+    const trimDark = new THREE.MeshStandardMaterial({ 
+      color: 0x08090a, 
+      roughness: 0.8 
+    });
+
+    const windowGlass = new THREE.MeshPhysicalMaterial({ 
+      color: 0x080c10, 
+      roughness: 0.01, 
+      metalness: 0.9, 
+      transmission: 0.3,
+      transparent: true,
+      ior: 1.5
+    });
+
+    const tireRubber = new THREE.MeshStandardMaterial({ 
+      color: 0x1c1c1f, 
+      roughness: 0.85 
+    });
+
+    const rimMetal = new THREE.MeshStandardMaterial({ 
+      color: 0xc4c9d4, 
+      metalness: 0.9, 
+      roughness: 0.15 
+    });
+
+    const brakeCaliper = new THREE.MeshStandardMaterial({ 
+      color: 0xe3001b, 
+      roughness: 0.3, 
+      metalness: 0.4 
+    });
+
+    const highBeamEmissive = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const tailLightEmissive = new THREE.MeshBasicMaterial({ color: 0xee0505 });
+
+    // COMPLEX PROCEDURAL 3D PORSCHE 911 GT3 RS (992)
+    function buildDetailedPorsche() {
+      const porsche = new THREE.Group();
+
+      // Body Silhouette
+      const pProfile = new THREE.Shape();
+      pProfile.moveTo(-2.28, 0.22); 
+      pProfile.lineTo(-2.30, 0.76); // Rear Fascia & bumper line
+      pProfile.quadraticCurveTo(-2.15, 0.92, -1.82, 0.95); // Huge Rear Wing Base/Deck
+      pProfile.quadraticCurveTo(-0.72, 1.29, -0.15, 1.28); // 911 Teardrop continuous roof line
+      pProfile.quadraticCurveTo(0.50, 1.20, 1.05, 0.84);  // Sloping Fast Windshield 
+      pProfile.quadraticCurveTo(1.78, 0.72, 2.22, 0.40);  // Slanted nose & hood nostrils zone
+      pProfile.lineTo(2.28, 0.20);  // Front low Splitter lip
+      pProfile.lineTo(-2.28, 0.20);
+
+      const bodyGeo = new THREE.ExtrudeGeometry(pProfile, {
+        depth: 1.84,
+        bevelEnabled: true,
+        bevelSegments: 7,
+        steps: 3,
+        bevelSize: 0.14,
+        bevelThickness: 0.14
+      });
+      bodyGeo.translate(0, 0, -0.92);
+      const mainShell = new THREE.Mesh(bodyGeo, bodyPaint);
+      mainShell.castShadow = true;
+      mainShell.receiveShadow = true;
+      porsche.add(mainShell);
+
+      // Distinct A, B, C Pillars + Windows (Cutting into side body)
+      const cockpitGeo = new THREE.BoxGeometry(1.68, 0.44, 1.54);
+      const cockpit = new THREE.Mesh(cockpitGeo, windowGlass);
+      cockpit.position.set(-0.25, 1.05, 0);
+      porsche.add(cockpit);
+
+      // Carbon front intake cowl & nostril overlays
+      const hoodNostrils = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.05, 1.10), carbonFiber);
+      hoodNostrils.position.set(1.42, 0.65, 0);
+      hoodNostrils.rotation.z = -0.15;
+      porsche.add(hoodNostrils);
+
+      // Iconic Circular Headlight Casings
+      [-0.72, 0.72].forEach((z) => {
+        const hCasing = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.15, 24), trimDark);
+        hCasing.position.set(1.92, 0.65, z);
+        hCasing.rotation.z = Math.PI/2.4;
+        porsche.add(hCasing);
+
+        const optic = new THREE.Mesh(new THREE.SphereGeometry(0.10, 16, 16), highBeamEmissive);
+        optic.position.set(1.98, 0.66, z);
+        porsche.add(optic);
+      });
+
+      // Front splitter aerodynamic extensions
+      const frontAerodynamics = new THREE.Mesh(new THREE.BoxGeometry(4.70, 0.06, 2.05), carbonFiber);
+      frontAerodynamics.position.set(0.04, 0.16, 0);
+      porsche.add(frontAerodynamics);
+
+      // Fender Top Gills / Aerodynamic Slat Vent assemblies (Crucial 992 trait)
+      [-0.94, 0.94].forEach((z) => {
+        const gills = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.12, 0.10), carbonFiber);
+        gills.position.set(1.28, 0.75, z);
+        gills.rotation.y = z > 0 ? 0.15 : -0.15;
+        porsche.add(gills);
+      });
+
+      // Giant GT3 RS Swan-neck Racing Rear Wing (Dual support structures & endplates)
+      const spoilerMain = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.04, 2.15), carbonFiber);
+      spoilerMain.position.set(-2.14, 1.48, 0);
+      spoilerMain.rotation.z = -0.11;
+      spoilerMain.castShadow = true;
+      porsche.add(spoilerMain);
+
+      // Huge Side Wing endplates (Double sided endplates visible in 1st picture)
+      [-1.075, 1.075].forEach((z) => {
+        const endPlate = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.36, 0.04), carbonFiber);
+        endPlate.position.set(-2.14, 1.48, z);
+        porsche.add(endPlate);
+      });
+
+      // Curved support swan-neck struts (Attached from top-down onto trunk deck)
+      [-0.52, 0.52].forEach((z) => {
+        const curvedAeroStrut = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.68, 0.04), trimDark);
+        curvedAeroStrut.position.set(-2.02, 1.15, z);
+        curvedAeroStrut.rotation.z = -0.32;
+        porsche.add(curvedAeroStrut);
+      });
+
+      // High horizontal 992 LED tail light strip
+      const stripLED = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 1.80), tailLightEmissive);
+      stripLED.position.set(-2.39, 0.75, 0);
+      porsche.add(stripLED);
+
+      // Center dual exhaust tips underneath
+      const pipeBox = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.18), trimDark);
+      pipeBox.position.set(-2.28, 0.28, 0);
+      porsche.add(pipeBox);
+
+      // STAGGERED CENTER-LOCK WHEEL ASSEMBLIES (Front: 20", Rear: 21" - as GT3 RS 992 is built)
+      const setups = [
+        { x: 1.34, y: 0.35, z: 0.95, isFront: true },
+        { x: 1.34, y: 0.35, z: -0.95, isFront: true },
+        { x: -1.36, y: 0.37, z: 0.97, isFront: false },
+        { x: -1.36, y: 0.37, z: -0.97, isFront: false }
+      ];
+
+      setups.forEach((s) => {
+        const size = s.isFront ? 0.35 : 0.37;
+        const wGroup = new THREE.Group();
+
+        // Tire track tread
+        const tyre = new THREE.Mesh(new THREE.CylinderGeometry(size, size, 0.28, 36), tireRubber);
+        tyre.rotation.x = Math.PI / 2;
+        tyre.castShadow = true;
+        wGroup.add(tyre);
+
+        // Multi-spoke high-detail alloy Rim
+        const alloy = new THREE.Mesh(new THREE.CylinderGeometry(size * 0.78, size * 0.78, 0.29, 20), rimMetal);
+        alloy.rotation.x = Math.PI / 2;
+        wGroup.add(alloy);
+
+        // Brake Caliper and Rotor tucked inside
+        const bDisc = new THREE.Mesh(new THREE.CylinderGeometry(size * 0.54, size * 0.54, 0.08, 16), trimDark);
+        bDisc.rotation.x = Math.PI / 2;
+        bDisc.position.z = s.z > 0 ? -0.05 : 0.05;
+        wGroup.add(bDisc);
+
+        const cal = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.08), brakeCaliper);
+        cal.position.set(0, size * 0.3, s.z > 0 ? -0.05 : 0.05);
+        wGroup.add(cal);
+
+        // Porsche Red Centerlock nut
+        const lock = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.30, 8), brakeCaliper);
+        lock.rotation.x = Math.PI / 2;
+        wGroup.add(lock);
+
+        wGroup.position.set(s.x, s.y, s.z);
+        porsche.add(wGroup);
+      });
+
+      return porsche;
+    }
+
+    let activeModel = buildDetailedPorsche();
+    scene.add(activeModel);
+
+    // DYNAMIC SWATCH paint selector
+    document.querySelectorAll('.swatch').forEach((swatch) => {
+      swatch.addEventListener('click', (e) => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+        bodyPaint.color.set(swatch.dataset.color);
+      });
+    });
+
+    // GLTF / .GLB custom loader fallback (Direct imports support)
+    const gltfLoader = new GLTFLoader();
+    const dLoader = new DRACOLoader();
+    dLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    gltfLoader.setDRACOLoader(dLoader);
+
+    document.getElementById('glb-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      gltfLoader.load(URL.createObjectURL(file), (gltf) => {
+        scene.remove(activeModel);
+        
+        const uploadedModel = gltf.scene;
+        const box = new THREE.Box3().setFromObject(uploadedModel);
+        const size = box.getSize(new THREE.Vector3());
+        
+        // Match realistic scale bound 
+        uploadedModel.scale.setScalar(4.57 / Math.max(size.x, size.y, size.z));
+        
+        const reboundBox = new THREE.Box3().setFromObject(uploadedModel);
+        const reCenter = reboundBox.getCenter(new THREE.Vector3());
+        
+        uploadedModel.position.set(-reCenter.x, -reboundBox.min.y + 0.1, -reCenter.z);
+        
+        uploadedModel.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            
+            // Re-bind material properties to loaded color swatches where suitable
+            if (node.name.toLowerCase().includes('paint') || node.name.toLowerCase().includes('body')) {
+              node.material = bodyPaint;
+            }
+          }
+        });
+
+        scene.add(uploadedModel);
+        activeModel = uploadedModel;
+      });
+    });
+
+    // RENDER RESIZE & CONTINUOUS CAMERA ANIMATION LOOP
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
