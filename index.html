@@ -12,8 +12,8 @@
   <script type="importmap">
     {
       "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
       }
     }
   </script>
@@ -42,7 +42,8 @@
       <a href="#hero" class="nav-link active" data-section="hero">911 GT3 RS</a>
       <a href="#studio" class="nav-link" data-section="studio">Aero &amp; Studio</a>
       <a href="#heritage" class="nav-link" data-section="heritage">Heritage &amp; Team</a>
-      <a href="#specs" class="nav-link" data-section="specs">Specs &amp; Reviews</a>
+      <a href="#specs" class="nav-link" data-section="specs">Specs</a>
+      <a href="#footer" class="nav-link" data-section="footer">Footer</a>
     </nav>
 
     <div class="audio-controls">
@@ -296,36 +297,22 @@
             </div>
 
             <div class="control-group">
-              <label class="control-label">FORGED MAGNESIUM WHEEL PACKAGE</label>
-              <div class="wheel-grid" id="wheelOptions">
-                <button
-                  class="wheel-btn active"
-                  data-wheel='20"/21" SATIN BLACK FORGED MAGNESIUM'
-                  data-wheel-color="#2B3036"
-                  data-wheel-tag="SATIN BLACK"
-                >
-                  <span class="swatch-dot" style="background:#2B3036; border:1px solid #555;"></span>
-                  <span>Satin Black Magnesium</span>
-                </button>
-                <button
-                  class="wheel-btn"
-                  data-wheel='20"/21" PYRO RED WEISSACH FORGED'
-                  data-wheel-color="#D91E2A"
-                  data-wheel-tag="PYRO RED"
-                >
-                  <span class="swatch-dot" style="background:#D91E2A;"></span>
-                  <span>Pyro Red Weissach</span>
-                </button>
-                <button
-                  class="wheel-btn"
-                  data-wheel='20"/21" SATIN NEODYME RACE SPEC'
-                  data-wheel-color="#C8A96E"
-                  data-wheel-tag="SATIN NEODYME"
-                >
-                  <span class="swatch-dot" style="background:#C8A96E;"></span>
-                  <span>Satin Neodyme</span>
-                </button>
-              </div>
+              <span id="streamlineGroupLabel" class="control-label">AIRFLOW STREAMLINE VECTORS</span>
+              <div class="stream-grid" id="streamlineControls" role="group" aria-labelledby="streamlineGroupLabel">
+              <button type="button" class="stream-btn" data-stream="s1">
+                <span class="swatch-dot" style="background: var(--accent-color); box-shadow: 0 0 8px var(--accent-glow);"></span>
+                <span>Vector S1 — Upper Swan-Neck Wing Flow</span>
+              </button>
+
+              <button type="button" class="stream-btn" data-stream="s2">
+                <span class="swatch-dot" style="background: var(--accent-color); box-shadow: 0 0 8px var(--accent-glow);"></span>
+                <span>Vector S2 — Mid-Body &amp; Bonnet S-Duct Flow</span>
+              </button>
+
+              <button type="button" class="stream-btn" data-stream="s3">
+                <span class="swatch-dot" style="background: var(--accent-color); box-shadow: 0 0 8px var(--accent-glow);"></span>
+                <span>Vector S3 — Lower Splitter &amp; Diffuser Flow</span>
+              </button>
             </div>
           </div>
 
@@ -380,7 +367,7 @@
 
         <article class="timeline-card reveal-up">
           <span class="year-badge">1939–1945 • HEAVY ARMOR ERA
-            <svg class="era-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="era-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <path d="M12 7v10" />
               <path d="M8 11h8" />
@@ -457,35 +444,59 @@
           </div>
         </div>
       </div>
-
-      <div class="team-section reveal-up">
-        <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 911 GT3 RS</h3>
-        <div class="team-grid">
-          <div class="team-card">
-            <div class="role-tag">DIRECTOR, GT MODEL LINE</div>
-            <h4>Andreas Preuninger</h4>
-            <p>
-              Known as "Mr. GT," Preuninger led the Weissach GT division to abandon front luggage space in favor of a single, massive central angled radiator—unlocking active front-wing aerodynamics never before seen on a road-legal 911.
-            </p>
-          </div>
-
-          <div class="team-card">
-            <div class="role-tag">VP STYLE PORSCHE</div>
-            <h4>Michael Mauer</h4>
-            <p>
-              Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 992 widebody silhouette.
-            </p>
-          </div>
-
-          <div class="team-card">
-            <div class="role-tag">BRAND AMBASSADOR &amp; TEST DRIVER</div>
-            <h4>Jörg Bergmeister</h4>
-            <p>
-              Piloted the 992 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
-            </p>
-          </div>
-        </div>
+<div class="team-section reveal-up">
+  <h3 class="sub-heading">THE ARCHITECTS BEHIND THE 911 GT3 RS</h3>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="role-tag">
+        <span>DIRECTOR, GT MODEL LINE</span>
+        <!-- Wind Tunnel / Aerodynamics SVG -->
+          <svg class="role-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+            <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+            <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+          </svg>
       </div>
+      <h4>Andreas Preuninger</h4>
+      <p>
+        Known as "Mr. GT," Preuninger led the Weissach GT division to abandon front luggage space in favor of a single, massive central angled radiator—unlocking active front-wing aerodynamics never before seen on a road-legal 911.
+      </p>
+    </div>
+
+    <div class="team-card">
+      <div class="role-tag">
+        <span>VP STYLE PORSCHE</span>
+        <!-- Exterior Design / Pen Nib SVG -->
+        <svg class="role-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+          <path d="M2 2l7.586 7.586" />
+          <circle cx="11" cy="11" r="2" />
+        </svg>
+      </div>
+      <h4>Michael Mauer</h4>
+      <p>
+        Oversaw the uncompromising "form follows function" exterior language, integrating 911 RSR endurance racing aero elements seamlessly into the iconic 992 widebody silhouette.
+      </p>
+    </div>
+
+    <div class="team-card">
+      <div class="role-tag">
+        <span>BRAND AMBASSADOR &amp; TEST DRIVER</span>
+        <!-- Motorsport Steering Wheel SVG -->
+        <svg class="role-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="2" />
+          <path d="M3.5 10h6M14.5 10h6M12 14v7" />
+        </svg>
+      </div>
+      <h4>Jörg Bergmeister</h4>
+      <p>
+        Piloted the 992 911 GT3 RS around the 20.8-km Nürburgring Nordschleife in a blistering 6:49.328 (6:44.848 on the 20.6-km layout), validating every damper setting and DRS transition on the limit.
+      </p>
+    </div>
+  </div>
+</div>
     </section>
 
     <!-- SPECIFICATIONS SECTION (3 INTERACTIVE TABS + WEISSACH TOGGLE + SCROLL COUNTERS) -->
@@ -549,7 +560,6 @@
           </div>
           <div id="kerbWeightLabel" class="counter-label">DIN KERB WEIGHT (STANDARD)</div>
         </div>
-      </div>
       </div>
 
       <!-- 3 Interactive Tabs: Engine / Aero / Chassis & Interior -->
@@ -630,7 +640,7 @@
   </main>
 
   <!-- FOOTER SECTION: STAR RATING, USER REVIEW BOX & DEVELOPER CREDITS -->
-  <footer class="site-footer">
+  <footer id="footer" class="site-footer">
     <div class="footer-grid">
       <div class="review-box-card">
         <h3>RATE THIS 911 GT3 RS EXPERIENCE</h3>
@@ -694,7 +704,7 @@
         <!-- Sleek Loading Overlay While .glb Downloads -->
         <div id="modelLoaderOverlay" class="model-loader-overlay" aria-live="polite">
           <div class="loader-spinner"></div>
-          <span class="loader-title" id="loaderTitle">DOWNLOADING 911 GT3 RS CHASSIS...</span>
+          <span class="loader-title" id="loaderTitle">RENDERING 911 GT3 RS MODEL...</span>
           <span class="loader-progress" id="loaderProgress">0%</span>
         </div>
 

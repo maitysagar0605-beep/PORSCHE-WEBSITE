@@ -25,10 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hex: '#39FF14',
     glow: 'rgba(57, 255, 20, 0.35)',
     hue: '0deg',
-    img: 'assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif',
-    wheel: '20"/21" SATIN BLACK FORGED MAGNESIUM',
-    wheelColor: '#2B3036',
-    wheelTag: 'SATIN BLACK'
+    img: 'assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif'
   };
 
   let activeBuild = { ...defaultBuild };
@@ -37,8 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved && saved.color && saved.img) {
       activeBuild = {
         ...defaultBuild,
-        ...saved,
-        hue: saved.hue || hueRotationMap[saved.color] || '0deg'
+        color: saved.color,
+        hex: saved.hex || defaultBuild.hex,
+        glow: saved.glow || defaultBuild.glow,
+        hue: saved.hue || hueRotationMap[saved.color] || '0deg',
+        img: saved.img
       };
     }
   } catch (e) {
@@ -50,15 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const studioCarImg = document.getElementById('studioCarImg');
   const activePaintBadge = document.getElementById('activePaintBadge');
   const studioColorName = document.getElementById('studioColorName');
-  const studioWheelName = document.getElementById('studioWheelName');
-  const wheelFinishBadge = document.getElementById('wheelFinishBadge');
   const saveStatus = document.getElementById('saveStatus');
   const exhaustCanvas = document.getElementById('exhaustCanvas');
   const canvasCtx = exhaustCanvas ? exhaustCanvas.getContext('2d') : null;
 
   let scene, camera, renderer, controls, carGroup, turntableRing, bodyPaintMat, wheelRimMat, rimLight;
   let gltfPaintMaterials = [];
-  let gltfRimMaterials = [];
   let wheelsList = [];
   let autoSpin = true;
   let threeInitialized = false;
@@ -100,12 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
     canvasCtx.stroke();
   }
 
-  function update3DCarPaint(hex, wheelHex) {
+  function update3DCarPaint(hex) {
     const deepPaint = getDeepCarPaintColor(hex);
 
     // 1. Update procedural fallback mesh (if active)
     if (bodyPaintMat) bodyPaintMat.color.copy(deepPaint);
-    if (wheelRimMat && wheelHex) wheelRimMat.color.set(wheelHex);
 
     // 2. Keep showroom turntable ring & subtle rim light matched to UI accent
     if (turntableRing) turntableRing.material.color.set(hex);
@@ -122,14 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       mat.needsUpdate = true;
     });
-
-    // 4. Update loaded .glb wheel rim materials (if matched)
-    if (wheelHex && gltfRimMaterials.length > 0) {
-      gltfRimMaterials.forEach((mat) => {
-        mat.color.set(wheelHex);
-        mat.needsUpdate = true;
-      });
-    }
   }
 
   function applyBuildToDOM(build) {
@@ -137,26 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
     rootEl.style.setProperty('--accent-color', build.hex);
     rootEl.style.setProperty('--accent-glow', build.glow);
     rootEl.style.setProperty('--bg-hue', resolvedHue);
-    rootEl.style.setProperty('--wheel-accent', build.wheelColor || '#2B3036');
 
     if (heroCarImg) heroCarImg.src = build.img;
     if (studioCarImg) studioCarImg.src = build.img;
-    update3DCarPaint(build.hex, build.wheelColor);
+    update3DCarPaint(build.hex);
     drawIdleBaseline(build.hex);
 
     if (activePaintBadge) activePaintBadge.textContent = build.color.toUpperCase();
     if (studioColorName) studioColorName.textContent = `${build.color.toUpperCase()} // WEISSACH SPEC`;
-    if (studioWheelName) studioWheelName.textContent = build.wheel;
-    if (wheelFinishBadge) {
-      wheelFinishBadge.innerHTML = `<i class="wheel-dot-live"></i> ${build.wheelTag || 'MAGNESIUM SPEC'}`;
-    }
 
     document.querySelectorAll('.swatch-btn').forEach((btn) => {
       btn.classList.toggle('active', btn.dataset.color === build.color);
-    });
-
-    document.querySelectorAll('.wheel-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.wheel === build.wheel);
     });
 
     try {
@@ -185,21 +164,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.querySelectorAll('.wheel-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      activeBuild.wheel = btn.dataset.wheel;
-      activeBuild.wheelColor = btn.dataset.wheelColor || '#2B3036';
-      activeBuild.wheelTag = btn.dataset.wheelTag || 'MAGNESIUM SPEC';
-      applyBuildToDOM(activeBuild);
-    });
-  });
-
-  /* ------------------------------------------------------------------------
+  
+/* ------------------------------------------------------------------------
      2. MOBILE MENU & NAVIGATION SCROLL-SPY
      ------------------------------------------------------------------------ */
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const primaryNav = document.getElementById('primaryNav');
   const navLinks = document.querySelectorAll('.nav-link');
+
+  function setActiveNav(id) {
+    navLinks.forEach((link) => {
+      link.classList.toggle('active', link.dataset.section === id);
+    });
+  }
+
+  function isAtFooter() {
+    const footerEl = document.getElementById('footer');
+    if (!footerEl) return false;
+    const atPageBottom =
+      window.innerHeight + Math.ceil(window.scrollY) >=
+      document.documentElement.scrollHeight - 24;
+    const footerReached = footerEl.getBoundingClientRect().top <= window.innerHeight * 0.65;
+    return atPageBottom || footerReached;
+  }
 
   if (mobileMenuBtn && primaryNav) {
     mobileMenuBtn.addEventListener('click', () => {
@@ -211,19 +198,29 @@ document.addEventListener('DOMContentLoaded', () => {
       link.addEventListener('click', () => {
         primaryNav.classList.remove('open');
         mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        if (link.dataset.section) {
+          setActiveNav(link.dataset.section);
+        }
       });
     });
   }
 
-  const trackedSections = document.querySelectorAll('main section[id]');
+  // Also sync active state if any footer anchor link elsewhere on the page is clicked
+  document.querySelectorAll('a[href="#footer"]').forEach((anchor) => {
+    anchor.addEventListener('click', () => setActiveNav('footer'));
+  });
+
+  const trackedSections = document.querySelectorAll('main section[id], footer[id]');
   const navSpyObserver = new IntersectionObserver(
     (entries) => {
+      if (isAtFooter()) {
+        setActiveNav('footer');
+        return;
+      }
+
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          navLinks.forEach((link) => {
-            link.classList.toggle('active', link.dataset.section === id);
-          });
+        if (entry.isIntersecting && entry.target.id !== 'footer') {
+          setActiveNav(entry.target.getAttribute('id'));
         }
       });
     },
@@ -231,6 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 
   trackedSections.forEach((sec) => navSpyObserver.observe(sec));
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (isAtFooter()) {
+        setActiveNav('footer');
+      } else if (document.querySelector('.nav-link[data-section="footer"].active')) {
+        setActiveNav('specs');
+      }
+    },
+    { passive: true }
+  );
 
   /* ------------------------------------------------------------------------
      3. HERO 3D PERSPECTIVE TILT CARD
@@ -266,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modelLoaderOverlay = document.getElementById('modelLoaderOverlay');
   const loaderProgress = document.getElementById('loaderProgress');
 
-  function buildProceduralGT3RS(paintHex, wheelHex) {
+  function buildProceduralGT3RS(paintHex) {
     const group = new THREE.Group();
 
     bodyPaintMat = new THREE.MeshPhysicalMaterial({
@@ -293,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     wheelRimMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(wheelHex || '#2B3036'),
+      color: 0x2b3036,
       metalness: 0.82,
       roughness: 0.24
     });
@@ -440,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environmentIntensity = 0.55;
+    pmremGenerator.dispose();
 
     // Studio Showroom Lighting
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080a0c, 0.65);
@@ -495,15 +505,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const center = box.getCenter(new THREE.Vector3());
         carGroup.position.set(-center.x, -box.min.y, -center.z);
 
-        // Scan and bind body-paint & wheel-rim materials for live color switching
+        // Scan and bind body-paint materials for live color switching
         gltfPaintMaterials = [];
-        gltfRimMaterials = [];
         const matchedPaintSet = new Set();
-        const matchedRimSet = new Set();
 
         const paintKeywords = /paint|body|carpaint|chassis|hood|bonnet|door|fender|wing|spoiler|bumper|shell|coat|exterior|livery/i;
-        const excludeKeywords = /glass|window|windshield|tire|tyre|rubber|brake|caliper|disc|rotor|light|headlight|taillight|lamp|interior|seat|dash|steering|carbon|grille|grill|mesh|exhaust|pipe|chrome|mirror|badge|logo|emblem|plate|shadow|floor/i;
-        const rimKeywords = /rim|wheel|alloy|magnesium|spoke/i;
+        const excludeKeywords = /glass|window|windshield|tire|tyre|rubber|brake|caliper|disc|rotor|light|headlight|taillight|lamp|interior|seat|dash|steering|carbon|grille|grill|mesh|exhaust|pipe|chrome|mirror|badge|logo|emblem|plate|shadow|floor|rim|wheel|alloy|magnesium|spoke/i;
 
         carGroup.traverse((child) => {
           if (!child.isMesh || !child.material) return;
@@ -511,15 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           materials.forEach((mat) => {
             const combinedName = `${child.name} ${mat.name}`;
-
-            if (rimKeywords.test(combinedName) && !/tire|tyre|rubber/i.test(combinedName)) {
-              if (!matchedRimSet.has(mat)) {
-                matchedRimSet.add(mat);
-                gltfRimMaterials.push(mat);
-              }
-              return;
-            }
-
             if (excludeKeywords.test(combinedName)) return;
 
             if (paintKeywords.test(combinedName) && !matchedPaintSet.has(mat)) {
@@ -537,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
           carGroup.traverse((child) => {
             if (!child.isMesh || !child.material) return;
             const combinedName = `${child.name} ${child.material.name || ''}`;
-            if (excludeKeywords.test(combinedName) || rimKeywords.test(combinedName)) return;
+            if (excludeKeywords.test(combinedName)) return;
 
             child.geometry.computeBoundingBox();
             const bSize = new THREE.Vector3();
@@ -557,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         scene.add(carGroup);
-        update3DCarPaint(activeBuild.hex, activeBuild.wheelColor);
+        update3DCarPaint(activeBuild.hex);
         if (modelSourceBadge) modelSourceBadge.textContent = '3D GLTF MODEL • 360° ORBIT';
         if (modelLoaderOverlay) modelLoaderOverlay.classList.add('hidden');
       },
@@ -569,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       (error) => {
         console.warn('GLB failed to load, building procedural fallback:', error);
-        carGroup = buildProceduralGT3RS(activeBuild.hex, activeBuild.wheelColor);
+        carGroup = buildProceduralGT3RS(activeBuild.hex);
         scene.add(carGroup);
         if (modelSourceBadge) modelSourceBadge.textContent = 'WEBGL 3D CHASSIS • 360° ORBIT';
         if (modelLoaderOverlay) modelLoaderOverlay.classList.add('hidden');
@@ -645,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-    update3DCarPaint(activeBuild.hex, activeBuild.wheelColor);
+    update3DCarPaint(activeBuild.hex);
   }
 
   function close360Modal() {
@@ -711,10 +709,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------------------------------------------------------------
-     5. INTERACTIVE SVG AERO HOTSPOT OVERLAY
+     5. INTERACTIVE SVG AERO HOTSPOTS & STREAMLINE VECTOR CONTROLS
      ------------------------------------------------------------------------ */
   const aeroData = {
     wing: {
+      stream: 's1',
       code: 'HOTSPOT 01',
       title: 'SWAN-NECK REAR WING & ACTIVE DRS',
       desc: 'Top-mounted swan-neck pylons leave the sensitive underside of the main wing undisturbed. At the press of the steering-wheel DRS button, the hydraulically actuated upper element flattens to slash drag on long straights—and snaps vertical under hard braking as an airbrake.',
@@ -722,19 +721,27 @@ document.addEventListener('DOMContentLoaded', () => {
       load285: '860 kg'
     },
     sduct: {
+      stream: 's2',
       code: 'HOTSPOT 02',
-      title: 'SINGLE CENTRAL ANGLED RADIATOR & S-DUCT',
+      title: 'SINGLE CENTRAL ANGLED RADIATOR & S\u2011DUCT',
       desc: 'Inspired by the Le Mans-winning 911 RSR, Porsche replaced the three-radiator setup with one massive central radiator. Hot air exits upward through twin bonnet nostrils while active front diffuser flaps adjust continuously in milliseconds.',
       load200: '185 kg (Front)',
       load285: '380 kg (Front)'
     },
     louvers: {
+      stream: 's3',
       code: 'HOTSPOT 03',
       title: 'CARBON FENDER LOUVERS & DOOR BLADES',
       desc: 'Aggressive front wheel-arch louvers evacuate high-pressure turbulent air generated by the rotating 20-inch front wheels, while sculpted side blades channel clean laminar flow toward the rear intakes.',
       load200: '+22% Efficiency',
       load285: '3x GT3 Aero'
     }
+  };
+
+  const streamToAeroKey = {
+    s1: 'wing',
+    s2: 'sduct',
+    s3: 'louvers'
   };
 
   const aeroPins = document.querySelectorAll('.aero-pin');
@@ -744,13 +751,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const aeroDownforceVal = document.getElementById('aeroDownforceVal');
   const aeroTotalVal = document.getElementById('aeroTotalVal');
 
-  function activateAeroPin(pin) {
-    const key = pin.dataset.aero;
+  function updateAeroTelemetry(key) {
     const info = aeroData[key];
     if (!info) return;
 
-    aeroPins.forEach((p) => p.classList.remove('active'));
-    pin.classList.add('active');
+    aeroPins.forEach((p) => {
+      p.classList.toggle('active', p.dataset.aero === key);
+    });
 
     if (aeroCode) aeroCode.textContent = info.code;
     if (aeroTitle) aeroTitle.textContent = info.title;
@@ -759,19 +766,71 @@ document.addEventListener('DOMContentLoaded', () => {
     if (aeroTotalVal) aeroTotalVal.textContent = info.load285;
   }
 
+  const toggleAirflowBtn = document.getElementById('toggleAirflowBtn');
+  const airflowLines = document.getElementById('airflowLines');
+  const streamlineBtns = document.querySelectorAll('#streamlineControls .stream-btn');
+  const streamlines = document.querySelectorAll('.streamline');
+  let airflowVisible = true;
+  let activeStream = null;
+
+  function highlightStreamline(targetStream, forceSelect = false) {
+    // Clicking the already-active button resets back to all 3 streamlines equal
+    activeStream = !forceSelect && activeStream === targetStream ? null : targetStream;
+
+    streamlineBtns.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.stream === activeStream);
+    });
+
+    if (airflowLines) {
+      airflowLines.classList.toggle('has-focus', Boolean(activeStream));
+    }
+
+    streamlines.forEach((line) => {
+      line.classList.toggle('highlighted', Boolean(activeStream) && line.classList.contains(activeStream));
+    });
+
+    // Sync the telemetry card (Title, Hotspot Badge, Description & both Downforce boxes)
+    const aeroKey = activeStream ? streamToAeroKey[activeStream] : 'wing';
+    updateAeroTelemetry(aeroKey);
+  }
+
   aeroPins.forEach((pin) => {
-    pin.addEventListener('click', () => activateAeroPin(pin));
+    const handlePinSelect = () => {
+      const key = pin.dataset.aero;
+      const info = aeroData[key];
+      if (!info) return;
+
+      if (!airflowVisible && airflowLines && toggleAirflowBtn) {
+        airflowVisible = true;
+        airflowLines.classList.remove('hidden');
+        toggleAirflowBtn.classList.add('active');
+        toggleAirflowBtn.textContent = 'AIRFLOW VECTORS: ON';
+      }
+
+      highlightStreamline(info.stream, true);
+    };
+
+    pin.addEventListener('click', handlePinSelect);
     pin.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        activateAeroPin(pin);
+        handlePinSelect();
       }
     });
   });
 
-  const toggleAirflowBtn = document.getElementById('toggleAirflowBtn');
-  const airflowLines = document.getElementById('airflowLines');
-  let airflowVisible = true;
+  streamlineBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // Automatically turn airflow vectors ON if user clicks a vector button while toggled off
+      if (!airflowVisible && airflowLines && toggleAirflowBtn) {
+        airflowVisible = true;
+        airflowLines.classList.remove('hidden');
+        toggleAirflowBtn.classList.add('active');
+        toggleAirflowBtn.textContent = 'AIRFLOW VECTORS: ON';
+      }
+      highlightStreamline(btn.dataset.stream);
+    });
+  });
 
   if (toggleAirflowBtn && airflowLines) {
     toggleAirflowBtn.addEventListener('click', () => {
@@ -779,6 +838,11 @@ document.addEventListener('DOMContentLoaded', () => {
       airflowLines.classList.toggle('hidden', !airflowVisible);
       toggleAirflowBtn.classList.toggle('active', airflowVisible);
       toggleAirflowBtn.textContent = `AIRFLOW VECTORS: ${airflowVisible ? 'ON' : 'OFF'}`;
+
+      // Reset focused streamline when vectors are toggled off
+      if (!airflowVisible && activeStream) {
+        highlightStreamline(activeStream);
+      }
     });
   }
 
