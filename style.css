@@ -244,8 +244,8 @@ footer {
 }
 
 .hero-crest-badge {
-  width: 110px;
-  height: 136px;
+  width: 130px;
+  height: 150px;
   margin-bottom: 18px;
   color: var(--accent-color);
   filter: drop-shadow(0 0 14px var(--accent-glow));
@@ -315,8 +315,9 @@ footer {
 
 .metric-lbl {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-muted);
+  font-size: 0.78rem;
+  color: var(--accent-color);
+  font-weight: 700;
 }
 
 .hero-cta-row {
@@ -1211,8 +1212,9 @@ footer {
   max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 32px;
+  grid-template-columns: 1.05fr 1.05fr 0.9fr;
+  gap: 24px;
+  align-items: stretch;
 }
 
 .review-box-card,
@@ -1223,6 +1225,11 @@ footer {
   padding: 28px;
 }
 
+.review-box-card:hover,
+.developer-info-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+}
 .review-box-card h3 {
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -1359,7 +1366,7 @@ footer {
 }
 
 .dev-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
@@ -1369,12 +1376,16 @@ footer {
   color: var(--text-primary);
   text-decoration: none;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: border-color 0.2s ease;
 }
 
 .dev-link span {
   color: var(--accent-color);
+  flex-shrink: 0;
 }
 
 .dev-link:hover {
@@ -1390,6 +1401,155 @@ footer {
 
 .heart {
   color: var(--accent-color);
+}
+
+.footer-sources-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-carbon);
+  border-radius: 18px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.footer-sources-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+}
+
+.footer-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--accent-color);
+  margin-bottom: 4px;
+}
+
+.footer-sources-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0 0 18px;
+  color: var(--text-primary);
+}
+
+.source-credits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.source-credits-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0B0D0E;
+  border: 1px solid var(--border-carbon);
+  font-size: 0.84rem;
+}
+
+.source-role {
+  color: var(--accent-color);
+}
+
+.source-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.resource-stack-box {
+  background: #0B0D0E;
+  border: 1px solid var(--border-carbon);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stack-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stack-pill {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 35%, var(--border-carbon));
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.dossier-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-carbon);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.dossier-meta-row strong {
+  color: var(--text-primary);
+}
+
+.footer-pdf-action {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-download-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--accent-color);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent-color);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pdf-download-btn:hover {
+  background: var(--accent-color);
+  color: #07090A;
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+.pdf-meta {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================
@@ -1545,7 +1705,7 @@ footer {
 /* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .hero-container,
   .studio-split-layout,
   .footer-grid {

@@ -1213,4 +1213,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderReviews();
+
+  /* ------------------------------------------------------------------------
+     9. FOOTER PROJECT PDF BRIEF DOWNLOADER
+     ------------------------------------------------------------------------ */
+  const downloadProjectPdfBtn = document.getElementById('downloadProjectPdfBtn');
+
+  if (downloadProjectPdfBtn) {
+    downloadProjectPdfBtn.addEventListener('click', () => {
+      const pdfPath = downloadProjectPdfBtn.dataset.pdfPath || 'assests/Project%20Docs/Porsche_911_GT3_RS_Project_Brief.pdf';
+      const link = document.createElement('a');
+      link.href = pdfPath;
+      link.download = 'Porsche_911_GT3_RS_Project_Brief.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+  }
 });
