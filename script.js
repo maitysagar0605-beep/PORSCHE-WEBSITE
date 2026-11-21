@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gltfLoader.setDRACOLoader(dracoLoader);
 
     // Load Real .glb Model from assests/models/porsche_911_gt3_rs_992.glb
-    gltfLoader.load(
+gltfLoader.load(
       'assests/models/porsche_911_gt3_rs_992.glb',
       (gltf) => {
         if (carGroup) scene.remove(carGroup);
@@ -512,12 +512,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const paintKeywords = /paint|body|carpaint|chassis|hood|bonnet|door|fender|wing|spoiler|bumper|shell|coat|exterior|livery/i;
         const excludeKeywords = /glass|window|windshield|tire|tyre|rubber|brake|caliper|disc|rotor|light|headlight|taillight|lamp|interior|seat|dash|steering|carbon|grille|grill|mesh|exhaust|pipe|chrome|mirror|badge|logo|emblem|plate|shadow|floor|rim|wheel|alloy|magnesium|spoke/i;
 
+        // 1. Primary pass: Match explicit paint/body names (for uncompressed or named GLBs)
         carGroup.traverse((child) => {
           if (!child.isMesh || !child.material) return;
           const materials = Array.isArray(child.material) ? child.material : [child.material];
 
           materials.forEach((mat) => {
-            const combinedName = `${child.name} ${mat.name}`;
+            const combinedName = `${child.name} ${mat.name || ''}`;
             if (excludeKeywords.test(combinedName)) return;
 
             if (paintKeywords.test(combinedName) && !matchedPaintSet.has(mat)) {
@@ -527,7 +528,34 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
 
-        // Fallback: If model uses generic names (e.g., Material.001), pick the largest non-excluded mesh
+        // 2. Fallback pass: For compressed GLBs where names were stripped, collect all colored exterior paint materials
+        if (gltfPaintMaterials.length === 0) {
+          carGroup.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+            materials.forEach((mat) => {
+              if (matchedPaintSet.has(mat)) return;
+              const combinedName = `${child.name} ${mat.name || ''}`;
+              if (excludeKeywords.test(combinedName)) return;
+
+              // Ignore transparent glass/decals
+              if (mat.transparent && mat.opacity < 0.95) return;
+
+              // Match saturated/mid-lightness painted body panels while skipping black rubber/carbon/interior and pure white/silver
+              if (mat.color) {
+                const hsl = {};
+                mat.color.getHSL(hsl);
+                if (hsl.l > 0.12 && hsl.l < 0.92 && hsl.s > 0.15) {
+                  matchedPaintSet.add(mat);
+                  gltfPaintMaterials.push(mat);
+                }
+              }
+            });
+          });
+        }
+
+        // 3. Final safety net: Pick the largest non-excluded mesh if the model uses a monochrome/white base paint texture
         if (gltfPaintMaterials.length === 0) {
           let largestMesh = null;
           let maxVolume = 0;
