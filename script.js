@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hex: '#39FF14',
     glow: 'rgba(57, 255, 20, 0.35)',
     hue: '0deg',
-    img: 'assests/images/Acid Green Porsche 911 GT3 Wallpaper, Sleek Sports Car Design, Speed and Power Aesthetic.jfif'
+    img: 'assests/images/Acid_Green_Porsche_911_GT3_Wallpaper.jfif'
   };
 
   let activeBuild = { ...defaultBuild };
